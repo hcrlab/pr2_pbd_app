@@ -1,0 +1,7 @@
+<launch>
+
+  <!-- This is Gazebo with a table and an object. To run on the real robot you would instead just 'robot start' -->
+
+  <include file="$(find pr2_gazebo)/launch/pr2_table_object.launch"/>
+
+</launch>
