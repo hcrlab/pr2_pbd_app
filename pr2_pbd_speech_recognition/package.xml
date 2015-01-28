@@ -1,0 +1,41 @@
+<package>
+  <name>pr2_pbd_speech_recognition</name>
+  <version>0.0.0</version>
+  <description>
+
+     pr2_pbd_speech_recognition
+     
+     1. Update msg/Command.msg with your list of commands
+     2. Run the script to generate the command corpus automatically: $ ./scripts/generate_corpus.py
+     3. Upload data/commands.corpus at http://www.speech.cs.cmu.edu/tools/lmtool.html and compile the knowledge base.
+     4. Download the generated Dictionary as data/commands.dic and the Language Model as data/commands.lm
+     5. Make 
+  
+  </description>
+  <maintainer email="sonyaa@cs.washington.edu">Sonya Alexandrova</maintainer>
+  <author>Maya Cakmak</author>
+  <license>BSD</license>
+  <url>http://ros.org/wiki/pr2_pbd_speech_recognition</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>rospy</run_depend>
+<!--  <depend package="std_msgs"/>
+  <depend package="rospy"/>
+  <depend package="pocketsphinx"/>-->
+
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- You can specify that this package is a metapackage here: -->
+    <!-- <metapackage/> -->
+
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+
+</package>
+
+
