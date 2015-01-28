@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 import roslib
-roslib.load_manifest('pr2_pbd_interaction');
+
+from pr2_pbd_interaction.Interaction import Interaction
+
+
+roslib.load_manifest('pr2_pbd_interaction')
 
 import sys
 import signal
 import rospy
-from Interaction import *
 
 def signal_handler(signal, frame):
     # The following makes sure the state of a user study is saved, so that it can be recovered

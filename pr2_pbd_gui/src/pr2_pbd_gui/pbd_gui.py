@@ -1,34 +1,31 @@
 #!/usr/bin/env python
 import functools
+
 import roslib
+
 
 roslib.load_manifest('pr2_pbd_gui')
 
 import os
-import time
-from subprocess import call
-import rospy, yaml
-from std_msgs.msg import String
+import rospy
 from qt_gui.plugin import Plugin
 from python_qt_binding import QtGui, QtCore
-from python_qt_binding.QtGui import QWidget, QFrame
-from python_qt_binding.QtGui import QGroupBox, QIcon, QTableView, QStandardItem
-from python_qt_binding.QtCore import Slot, qDebug, QSignalMapper, QTimer, qWarning, Signal
+from python_qt_binding.QtGui import QWidget
+from python_qt_binding.QtGui import QGroupBox
+from python_qt_binding.QtCore import qWarning, Signal
 from pr2_pbd_interaction.msg import GuiCommand, Strategy
 from pr2_pbd_speech_recognition.msg import Command
 from sound_play.msg import SoundRequest
 from pr2_pbd_interaction.msg import ExperimentState
 from pr2_pbd_interaction.srv import GetExperimentState
-from step_types.Action import Action
-from step_types.BaseStep import BaseStep
-from step_types.ManipulationStep import ManipulationStep
-from step_types.HeadStep import HeadStep
-from condition_types.GripperCondition import GripperCondition
-from condition_types.SpecificObjectCondition import SpecificObjectCondition
-from condition_types.IKCondition import IKCondition
-from condition_types.PreviousStepNotFailedCondition import PreviousStepNotFailedCondition
-from condition_types.PreviousStepNotSkippedCondition import PreviousStepNotSkippedCondition
-from condition_types.PreviousStepNotSucceededCondition import PreviousStepNotSucceededCondition
+from pr2_pbd_interaction.step_types.ManipulationStep import ManipulationStep
+from pr2_pbd_interaction.step_types.Action import Action
+from pr2_pbd_interaction.step_types.BaseStep import BaseStep
+from pr2_pbd_interaction.step_types.HeadStep import HeadStep
+from pr2_pbd_interaction.condition_types import PreviousStepNotFailedCondition, SpecificObjectCondition, \
+    GripperCondition, IKCondition
+from pr2_pbd_interaction.condition_types.PreviousStepNotSkippedCondition import PreviousStepNotSkippedCondition
+from pr2_pbd_interaction.condition_types.PreviousStepNotSucceededCondition import PreviousStepNotSucceededCondition
 
 
 class ClickableLabel(QtGui.QLabel):

@@ -1,0 +1,16 @@
+<launch>
+
+    <!--  pr2_moveit_config moveit_rviz.launch  -->
+
+    <arg name="rviz_config_file" value="$(find pr2_pbd_interaction)/config/pr2_pbd_manipulation.rviz"/>
+
+    <!-- rviz -->
+
+    <node name="$(anon rviz-1)" pkg="rviz" type="rviz" respawn="false"
+        args="-d $(arg rviz_config_file)" output="screen">
+    </node>
+
+
+
+
+</launch>
