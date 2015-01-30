@@ -1,5 +1,6 @@
 ''' Interface for controlling one arm '''
 import moveit_commander
+from moveit_msgs.srv import GetPositionIK, GetPositionIKRequest
 import roslib
 roslib.load_manifest('pr2_pbd_interaction')
 
@@ -57,7 +58,7 @@ class Arm:
 
         rospy.loginfo('Initializing ' + self._side() + ' arm.')
         rospy.loginfo("Initializing moveit")
-        arm_commander = moveit_commander.MoveGroupCommander(self._side() + "_arm")
+        self.arm_commander = moveit_commander.MoveGroupCommander(self._side() + "_arm")
 
         switch_controller = 'pr2_controller_manager/switch_controller'
         rospy.wait_for_service(switch_controller)
@@ -76,11 +77,11 @@ class Arm:
         #               + self._side() + ' arm.')
 
         # Set up Inversse Kinematics
-        # self.ik_srv = None
-        # self.ik_request = None
-        # self.ik_joints = None
-        # self.ik_limits = None
-        # self._setup_ik()
+        self.ik_srv = None
+        self.ik_request = None
+        self.ik_joints = None
+        self.ik_limits = None
+        self._setup_ik()
 
         gripper_name = (self._side_prefix() +
                         '_gripper_controller/gripper_action')
@@ -100,32 +101,27 @@ class Arm:
 
     def _setup_ik(self):
         '''Sets up services for inverse kinematics'''
-        ik_info_srv_name = ('pr2_' + self._side() +
-                            '_arm_kinematics_simple/get_ik_solver_info')
-        ik_srv_name = 'pr2_' + self._side() + '_arm_kinematics_simple/get_ik'
-        rospy.wait_for_service(ik_info_srv_name)
-        # ik_info_srv = rospy.ServiceProxy(ik_info_srv_name,
-        #                                  GetKinematicSolverInfo)
-        # solver_info = ik_info_srv()
-        # rospy.loginfo('IK info service has responded for '
-        #               + self._side() + ' arm.')
-        # rospy.wait_for_service(ik_srv_name)
-        # self.ik_srv = rospy.ServiceProxy(ik_srv_name,
-        #                                  GetPositionIK, persistent=True)
-        # rospy.loginfo('IK service has responded for ' + self._side() + ' arm.')
-        #
-        # # Set up common parts of an IK request
-        # self.ik_request = GetPositionIKRequest()
-        # self.ik_request.timeout = rospy.Duration(4.0)
-        # self.ik_joints = solver_info.kinematic_solver_info.joint_names
-        # self.ik_limits = solver_info.kinematic_solver_info.limits
-        # ik_links = solver_info.kinematic_solver_info.link_names
+        ik_srv_name = '/compute_ik'
+        rospy.loginfo('IK info service has responded for '
+                      + self._side() + ' arm.')
+        rospy.wait_for_service(ik_srv_name)
+        self.ik_srv = rospy.ServiceProxy(ik_srv_name,
+                                         GetPositionIK, persistent=True)
+        rospy.loginfo('IK service has responded for ' + self._side() + ' arm.')
 
+        robot = moveit_commander.RobotCommander()
+        # Set up common parts of an IK request
+        self.ik_request = GetPositionIKRequest()
         request = self.ik_request.ik_request
-        request.ik_link_name = ik_links[0]
+        request.timeout = rospy.Duration(4)
+        group_name = self._side() + '_arm'
+        request.group_name = group_name
+        self.ik_joints = self.joint_names
+        self.ik_limits = [robot.get_joint(x).bounds() for x in self.ik_joints]
+        request.ik_link_name = self.ee_name
         request.pose_stamped.header.frame_id = 'base_link'
-        request.ik_seed_state.joint_state.name = self.ik_joints
-        request.ik_seed_state.joint_state.position = [0] * len(self.ik_joints)
+        request.robot_state.joint_state.name = self.ik_joints
+        request.robot_state.joint_state.position = [0] * len(self.joint_names)
 
     def _side(self):
         '''Returns the word right or left depending on arm side'''
@@ -196,13 +192,16 @@ class Arm:
             for i in range(0, len(self.ik_joints)):
                 seed.append((self.ik_limits[i].min_position +
                              self.ik_limits[i].max_position) / 2.0)
-        self.ik_request.ik_request.ik_seed_state.joint_state.position = seed
+        self.ik_request.ik_request.robot_state.joint_state.position = seed
 
         try:
             #rospy.loginfo('Sending IK request.')
             response = self.ik_srv(self.ik_request)
             if(response.error_code.val == response.error_code.SUCCESS):
-                return response.solution.joint_state.position
+                # The solution contains all robot joints, we only need the joints of one arm.
+                response_names = response.solution.joint_state.name
+                response_positions = response.solution.joint_state.position
+                return [response_positions[i] for i, x in enumerate(response_names) if x in self.joint_names]
             else:
                 return None
         except rospy.ServiceException:
@@ -332,32 +331,28 @@ class Arm:
 
     def move_to_joints(self, joints, time_to_joint):
         '''Moves the arm to the desired joints'''
-        # Setup the goal
-        traj_goal = JointTrajectoryGoal()
-        traj_goal.trajectory.header.stamp = (rospy.Time.now() +
-                                             rospy.Duration(0.1))
-        traj_goal.trajectory.joint_names = self.joint_names
-        velocities = [0] * len(joints)
-        traj_goal.trajectory.points.append(JointTrajectoryPoint(
-                        positions=joints,
-                        velocities=velocities,
-                        time_from_start=rospy.Duration(time_to_joint)))
+        self.arm_commander.set_joint_value_target(zip(self.joint_names, joints))
+        self.arm_commander.plan()
+        print self.arm_commander.go(wait=False)
 
-        # Client sends the goal to the Server
-        self.traj_action_client.send_goal(traj_goal)
-
+    #TODO
     def is_executing(self):
+        return False
         '''Whether or not there is an ongoing action execution on the arm'''
         return (self.traj_action_client.get_state() == GoalStatus.ACTIVE
                 or self.traj_action_client.get_state() == GoalStatus.PENDING)
 
+    #TODO
     def is_successful(self):
+        return True
         '''Whetehr the execution succeeded'''
         return (self.traj_action_client.get_state() == GoalStatus.SUCCEEDED)
 
     def get_ik_for_ee(self, ee_pose, seed):
         ''' Finds the IK solution for given end effector pose'''
         joints = self._solve_ik(ee_pose, seed)
+        rospy.loginfo(joints)
+        rospy.loginfo(seed)
         ## If our seed did not work, try once again with the default seed
         if joints == None:
             rospy.logwarn('Could not find IK solution with preferred seed,' +
