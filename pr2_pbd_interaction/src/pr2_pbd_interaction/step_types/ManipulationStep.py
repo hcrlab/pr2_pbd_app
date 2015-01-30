@@ -5,11 +5,11 @@ import time
 
 import rospy
 
-from pr2_pbd_interaction import ArmStepMarkerSequence
+from pr2_pbd_interaction.ArmStepMarkerSequence import ArmStepMarkerSequence
 from pr2_pbd_interaction.Exceptions import ConditionError, StoppedByUserError
 from pr2_pbd_interaction.World import World
 from pr2_pbd_interaction.condition_types.IKCondition import IKCondition
-from pr2_pbd_interaction.condition_types import SpecificObjectCondition
+from pr2_pbd_interaction.condition_types.SpecificObjectCondition import SpecificObjectCondition
 from pr2_pbd_interaction.msg import ArmState, ExecutionStatus, ArmMode, Strategy, StepExecutionStatus
 from pr2_pbd_interaction.step_types.Step import Step
 

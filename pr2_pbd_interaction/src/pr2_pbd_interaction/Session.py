@@ -6,7 +6,8 @@ import rospy
 from pr2_pbd_interaction.msg import ExperimentState
 from pr2_pbd_interaction.srv import GetExperimentState
 from pr2_pbd_interaction.srv import GetExperimentStateResponse
-from step_types import ArmStep, BaseStep
+from step_types.ArmStep import ArmStep
+from step_types.BaseStep import BaseStep
 from step_types.Action import Action
 from pr2_pbd_interaction.step_types import ManipulationStep
 

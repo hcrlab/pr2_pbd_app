@@ -3,6 +3,7 @@ from actionlib_msgs.msg import GoalStatus
 
 import roslib
 import tf
+from pr2_pbd_interaction.Response import Response
 
 from pr2_pbd_interaction.msg._StepExecutionStatus import StepExecutionStatus
 

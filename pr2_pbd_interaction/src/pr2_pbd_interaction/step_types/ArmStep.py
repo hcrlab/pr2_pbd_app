@@ -5,7 +5,7 @@ from geometry_msgs.msg import Pose
 import rospy
 
 from pr2_pbd_interaction.Exceptions import ConditionError, StoppedByUserError
-from pr2_pbd_interaction.condition_types import GripperCondition
+from pr2_pbd_interaction.condition_types.GripperCondition import GripperCondition
 from pr2_pbd_interaction.msg import ExecutionStatus, ArmState, ArmTrajectory, ArmTarget, GripperAction, Strategy
 from pr2_pbd_interaction.msg._StepExecutionStatus import StepExecutionStatus
 from pr2_pbd_interaction.step_types.Step import Step

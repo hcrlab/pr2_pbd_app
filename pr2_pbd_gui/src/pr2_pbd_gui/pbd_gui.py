@@ -22,8 +22,10 @@ from pr2_pbd_interaction.step_types.ManipulationStep import ManipulationStep
 from pr2_pbd_interaction.step_types.Action import Action
 from pr2_pbd_interaction.step_types.BaseStep import BaseStep
 from pr2_pbd_interaction.step_types.HeadStep import HeadStep
-from pr2_pbd_interaction.condition_types import PreviousStepNotFailedCondition, SpecificObjectCondition, \
-    GripperCondition, IKCondition
+from pr2_pbd_interaction.condition_types.GripperCondition import GripperCondition
+from pr2_pbd_interaction.condition_types.PreviousStepNotFailedCondition import PreviousStepNotFailedCondition
+from pr2_pbd_interaction.condition_types.SpecificObjectCondition import SpecificObjectCondition
+from pr2_pbd_interaction.condition_types.IKCondition import IKCondition
 from pr2_pbd_interaction.condition_types.PreviousStepNotSkippedCondition import PreviousStepNotSkippedCondition
 from pr2_pbd_interaction.condition_types.PreviousStepNotSucceededCondition import PreviousStepNotSucceededCondition
 
