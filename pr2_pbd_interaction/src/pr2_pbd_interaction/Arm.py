@@ -351,8 +351,6 @@ class Arm:
     def get_ik_for_ee(self, ee_pose, seed):
         ''' Finds the IK solution for given end effector pose'''
         joints = self._solve_ik(ee_pose, seed)
-        rospy.loginfo(joints)
-        rospy.loginfo(seed)
         ## If our seed did not work, try once again with the default seed
         if joints == None:
             rospy.logwarn('Could not find IK solution with preferred seed,' +
