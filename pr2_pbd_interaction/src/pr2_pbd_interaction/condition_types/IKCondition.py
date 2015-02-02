@@ -22,7 +22,7 @@ class IKCondition(Condition):
         self.steps = steps
 
     def check(self):
-        from pr2_pbd_interaction import Robot
+        from pr2_pbd_interaction.Robot import Robot
 
         robot = Robot.get_robot()
         if not robot.has_ik_solutions_for_arm_steps(self.steps):

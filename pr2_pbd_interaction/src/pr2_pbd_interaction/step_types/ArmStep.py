@@ -42,7 +42,7 @@ class ArmStep(Step):
         self.conditions.append(new_condition)
 
     def execute(self, action_data):
-        from pr2_pbd_interaction import Robot
+        from pr2_pbd_interaction.Robot import Robot
 
         robot = Robot.get_robot()
         # If self.is_while, execute everything in a loop until a condition fails. Else execute everything once.

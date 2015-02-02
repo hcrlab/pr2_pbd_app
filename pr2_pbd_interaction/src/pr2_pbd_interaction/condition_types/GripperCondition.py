@@ -29,7 +29,7 @@ class GripperCondition(Condition):
         self.threshold = threshold
 
     def check(self):
-        from pr2_pbd_interaction import Robot
+        from pr2_pbd_interaction.Robot import Robot
 
         robot = Robot.get_robot()
         if self.r_gripper_position is not None:
