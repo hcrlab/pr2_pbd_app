@@ -111,7 +111,7 @@ class ArmStepMarker:
                                             MenuHandler.UNCHECKED)
 
         menu_id = self._get_menu_id(self._get_ref_name())
-        if menu_id == None:
+        if menu_id is None:
             self.has_object = False
         else:
             self._menu_handler.setCheckState(menu_id,
@@ -292,12 +292,12 @@ class ArmStepMarker:
                 return self.action_step.armTarget.lArm
         elif (self.action_step.type == ArmStep.ARM_TRAJECTORY):
             if self.arm_index == 0:
-                if traj_index == None:
+                if traj_index is None:
                     traj = self.action_step.armTrajectory.rArm
                     traj_index = int(len(traj) / 2)
                 return self.action_step.armTrajectory.rArm[traj_index]
             else:
-                if traj_index == None:
+                if traj_index is None:
                     traj = self.action_step.armTrajectory.lArm
                     traj_index = int(len(traj) / 2)
                 return self.action_step.armTrajectory.lArm[traj_index]

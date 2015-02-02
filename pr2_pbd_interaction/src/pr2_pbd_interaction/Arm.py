@@ -162,7 +162,7 @@ class Arm:
 
     def get_joint_state(self, joint_names=None):
         '''Returns position for the requested or all arm joints'''
-        if joint_names == None:
+        if joint_names is None:
             joint_names = self.joint_names
 
         if self.all_joint_names == []:
@@ -186,7 +186,7 @@ class Arm:
 
         self.ik_request.ik_request.pose_stamped.pose = ee_pose
 
-        if seed == None:
+        if seed is None:
             # If no see is specified for IK search, start search at midpoint
             seed = []
             for i in range(0, len(self.ik_joints)):
@@ -266,7 +266,7 @@ class Arm:
 
     def check_gripper_state(self, joint_name=None):
         '''Checks gripper state at the hardware level'''
-        if (joint_name == None):
+        if (joint_name is None):
             joint_name = self.gripper_joint_name
         gripper_pos = self.get_joint_state([joint_name])
         if gripper_pos != []:
@@ -352,12 +352,12 @@ class Arm:
         ''' Finds the IK solution for given end effector pose'''
         joints = self._solve_ik(ee_pose, seed)
         ## If our seed did not work, try once again with the default seed
-        if joints == None:
+        if joints is None:
             rospy.logwarn('Could not find IK solution with preferred seed,' +
                           'will try default seed.')
             joints = self._solve_ik(ee_pose)
 
-        if joints == None:
+        if joints is None:
             rospy.logwarn('IK out of bounds, will use the seed directly.')
         else:
             rollover = array((array(joints) - array(seed)) / pi, int)

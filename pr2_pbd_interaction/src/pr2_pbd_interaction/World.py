@@ -65,7 +65,7 @@ class WorldObject:
 
     def get_name(self):
         '''Function to get the object name'''
-        if (self.assigned_name == None):
+        if (self.assigned_name is None):
             if (self.is_recognized):
                 return 'object' + str(self.index)
             else:
@@ -87,7 +87,7 @@ class World:
     segmentation_service = rospy.get_param("/pr2_pbd_interaction/tabletop_segmentation_service")
 
     def __init__(self):
-        if World.tf_listener == None:
+        if World.tf_listener is None:
             World.tf_listener = TransformListener()
         self._lock = threading.Lock()
         self.surface = None

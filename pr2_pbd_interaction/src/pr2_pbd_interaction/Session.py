@@ -144,7 +144,7 @@ class Session:
 
     def _get_participant_id(self):
         '''Gets the experiment number from the command line'''
-        while (self._exp_number == None):
+        while (self._exp_number is None):
             try:
                 self._exp_number = int(raw_input(
                     'Please enter participant ID:'))

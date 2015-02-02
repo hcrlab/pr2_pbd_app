@@ -236,7 +236,7 @@ class Robot:
 
             target_joints = Robot.arms[arm_index].get_ik_for_ee(target_pose,
                                                                 arm_state.joint_pose)
-            if (target_joints == None):
+            if (target_joints is None):
                 rospy.logerr('No IK for relative end-effector pose.')
                 return solution, False
             else:
@@ -252,7 +252,7 @@ class Robot:
             target_pose = Pose(target_position, arm_state.ee_pose.orientation)
             target_joints = Robot.arms[arm_index].get_ik_for_ee(target_pose,
                                                                 arm_state.joint_pose)
-            if (target_joints == None):
+            if (target_joints is None):
                 rospy.logerr('No IK for absolute end-effector pose.')
                 return arm_state, False
             else:
@@ -520,7 +520,7 @@ class Robot:
     @staticmethod
     def _get_time_to_pose(pose, arm_index):
         ''' Returns the time to get to an arm pose'''
-        if (pose == None):
+        if (pose is None):
             rospy.logwarn('Arm ' + str(arm_index) + 'will not move.')
             return None
         else:
