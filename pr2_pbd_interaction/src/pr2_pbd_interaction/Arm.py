@@ -190,8 +190,8 @@ class Arm:
             # If no see is specified for IK search, start search at midpoint
             seed = []
             for i in range(0, len(self.ik_joints)):
-                seed.append((self.ik_limits[i].min_position +
-                             self.ik_limits[i].max_position) / 2.0)
+                seed.append((self.ik_limits[i][0] +
+                             self.ik_limits[i][1]) / 2.0)
         self.ik_request.ik_request.robot_state.joint_state.position = seed
 
         try:
