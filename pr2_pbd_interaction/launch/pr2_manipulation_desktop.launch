@@ -8,6 +8,7 @@
 
     <node name="$(anon rviz-1)" pkg="rviz" type="rviz" respawn="false"
         args="-d $(arg rviz_config_file)" output="screen">
+        <rosparam command="load" file="$(find pr2_moveit_config)/config/kinematics.yaml"/>
     </node>
 
 
