@@ -331,7 +331,7 @@ class Arm:
 
     def move_to_joints(self, joints, time_to_joint):
         '''Moves the arm to the desired joints'''
-        self.arm_commander.set_joint_value_target(zip(self.joint_names, joints))
+        self.arm_commander.set_joint_value_target(dict(zip(self.joint_names, joints)))
         self.arm_commander.plan()
         print self.arm_commander.go(wait=False)
 
