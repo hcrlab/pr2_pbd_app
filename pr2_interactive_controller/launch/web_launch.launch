@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<launch>
+	<node pkg="pr2_interactive_controller" name="controller" type="controller" output="screen" />
+
+	<node pkg="tf2_web_republisher" type="tf2_web_republisher" name="tf2_web_republisher" output="screen" />
+
+	<node pkg="interactive_marker_proxy" type="proxy" name="proxy" output="screen" args="topic_ns:=/interactive_controller_markers target_frame:=/odom_combined">
+	</node>
+</launch>

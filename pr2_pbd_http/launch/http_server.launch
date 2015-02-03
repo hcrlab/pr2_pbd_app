@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>  
+
+  <arg name="port" value="8000" />
+
+  <node name="http_server" pkg="pr2_pbd_http" type="http_server.py" output="screen">
+    <param name="port" value="$(arg port)" />
+  </node>
+</launch>
+
