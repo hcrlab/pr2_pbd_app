@@ -220,3 +220,6 @@ class ArmStep(Step):
             ## TODO
             pass
         return False
+
+    def get_type_name(self):
+        return "ArmStep"

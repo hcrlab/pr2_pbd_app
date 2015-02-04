@@ -367,6 +367,9 @@ class ManipulationStep(Step):
             copy.arm_steps.append(step.copy())
         return copy
 
+    def get_type_name(self):
+        return "ManipulationStep"
+
 
 def manipulation_step_representer(dumper, data):
     return dumper.represent_mapping(u'!ManipulationStep', {'is_while': data.is_while,

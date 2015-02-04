@@ -74,3 +74,6 @@ class Step:
     def reset_viz(self):
         self.interactive_marker_server.clear()
         self.interactive_marker_server.applyChanges()
+
+    def get_type_name(self):
+        return "Step"

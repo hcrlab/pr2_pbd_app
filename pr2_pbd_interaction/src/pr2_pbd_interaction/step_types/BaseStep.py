@@ -123,6 +123,9 @@ class BaseStep(Step):
         """Resets requests after reaching a previous target"""
         self.marker.pose_reached()
 
+    def get_type_name(self):
+        return "BaseStep"
+
 
 def base_step_representer(dumper, data):
     return dumper.represent_mapping(u'!BaseStep', {'is_while': data.is_while,

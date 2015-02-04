@@ -69,6 +69,9 @@ class HeadStep(Step):
             if not self.is_while:
                 return
 
+    def get_type_name(self):
+        return "HeadStep"
+
     def distance_from_real(self):
         from pr2_pbd_interaction.Robot import Robot
         robot = Robot.get_robot()

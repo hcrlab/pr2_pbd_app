@@ -319,6 +319,9 @@ class Action(Step):
     def copy(self):
         return Action.from_string(self.to_string())
 
+    def get_type_name(self):
+        return "Action"
+
 
 def action_step_constructor(loader, node):
     fields = loader.construct_mapping(node, deep=True)
