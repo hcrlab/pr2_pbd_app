@@ -123,10 +123,10 @@ class Action(Step):
             return self.lock
 
     def add_step(self, step):
-        # self.get_lock().acquire()
+        self.get_lock().acquire()
         self.steps.append(step)
         self.select_step(len(self.steps) - 1)
-        # self.get_lock().release()
+        self.get_lock().release()
 
     def delete_last_step(self):
         self.delete_step(len(self.steps) - 1)
@@ -223,21 +223,27 @@ class Action(Step):
 
     def initialize_viz(self):
         self.reset_viz()
-        self.get_lock().acquire()
+        # self.get_lock().acquire()
         if len(self.steps) > 0 and self.selected_step_id >= 0:
+            if self.selected_step_id >= len(self.steps):
+                rospy.logwarn("Trying to select step that does not exist.")
+                return
             selected_step = self.steps[self.selected_step_id]
             if not isinstance(selected_step, Action):
                 selected_step.initialize_viz()
             if not isinstance(selected_step, ManipulationStep):
                 World.get_world().clear_all_objects()
-        self.get_lock().release()
+        # self.get_lock().release()
 
     def update_viz(self):
-        self.get_lock().acquire()
+        # self.get_lock().acquire()
         if len(self.steps) > 0 and self.selected_step_id >= 0:
+            if self.selected_step_id >= len(self.steps):
+                rospy.logwarn("Trying to select step that does not exist.")
+                return
             if not isinstance(self.steps[self.selected_step_id], Action):
                 self.steps[self.selected_step_id].update_viz()
-        self.get_lock().release()
+        # self.get_lock().release()
 
     def clear(self):
         self.reset_viz()
@@ -249,6 +255,9 @@ class Action(Step):
     def reset_viz(self):
         # self.get_lock().acquire()
         if len(self.steps) > 0 and self.selected_step_id >= 0:
+            if self.selected_step_id >= len(self.steps):
+                rospy.logwarn("Trying to select step that does not exist.")
+                return
             self.steps[self.selected_step_id].reset_viz()
         self.interactive_marker_server.clear()
         self.interactive_marker_server.applyChanges()
