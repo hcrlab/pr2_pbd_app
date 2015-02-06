@@ -18,6 +18,7 @@ class ArmStep(Step):
     ARM_TRAJECTORY = 1
     def __init__(self, *args, **kwargs):
         Step.__init__(self, *args, **kwargs)
+        self.step_type = "ArmStep"
         self.conditions = [GripperCondition()]
         self.condition_order = range(len(self.conditions))
         self.type = ArmStep.ARM_TARGET
@@ -220,6 +221,3 @@ class ArmStep(Step):
             ## TODO
             pass
         return False
-
-    def get_type_name(self):
-        return "ArmStep"

@@ -28,6 +28,7 @@ class BaseStep(Step):
 
     def __init__(self, *args, **kwargs):  #(self, end_pose):
         Step.__init__(self, *args, **kwargs)
+        self.step_type = "BaseStep"
         self.end_pose = args[0]
         self.marker = BaseStepMarker(self, self.marker_click_cb, self.interactive_marker_server)
 
@@ -123,16 +124,13 @@ class BaseStep(Step):
         """Resets requests after reaching a previous target"""
         self.marker.pose_reached()
 
-    def get_type_name(self):
-        return "BaseStep"
-
-
 def base_step_representer(dumper, data):
     return dumper.represent_mapping(u'!BaseStep', {'is_while': data.is_while,
                                                    'ignore_conditions': data.ignore_conditions,
                                                    'conditions': data.conditions,
                                                    'condition_order': data.condition_order,
-                                                   'end_pose': data.end_pose})
+                                                   'end_pose': data.end_pose,
+                                                   'step_type': data.step_type})
 
 
 yaml.add_representer(BaseStep, base_step_representer)

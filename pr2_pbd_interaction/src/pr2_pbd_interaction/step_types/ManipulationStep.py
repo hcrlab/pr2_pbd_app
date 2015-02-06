@@ -48,6 +48,7 @@ class ManipulationStep(Step):
         from pr2_pbd_interaction.Robot import Robot
 
         Step.__init__(self, *args, **kwargs)
+        self.step_type = "ManipulationStep"
         self.arm_steps = []
         if len(Robot.arms) < 2:
             # if the robot hasn't been initialized yet, that means we're on client side, so we don't need anything
@@ -367,9 +368,6 @@ class ManipulationStep(Step):
             copy.arm_steps.append(step.copy())
         return copy
 
-    def get_type_name(self):
-        return "ManipulationStep"
-
 
 def manipulation_step_representer(dumper, data):
     return dumper.represent_mapping(u'!ManipulationStep', {'is_while': data.is_while,
@@ -377,6 +375,7 @@ def manipulation_step_representer(dumper, data):
                                                            'conditions': data.conditions,
                                                            'condition_order': data.condition_order,
                                                            'arm_steps': data.arm_steps,
-                                                           'objects': data.objects})
+                                                           'objects': data.objects,
+                                                           'step_type': data.step_type})
 
 yaml.add_representer(ManipulationStep, manipulation_step_representer)

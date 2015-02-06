@@ -36,6 +36,7 @@ class Action(Step):
 
     def __init__(self, *args, **kwargs):  #(self, id=None, name=None):
         Step.__init__(self, *args, **kwargs)
+        self.step_type = "Action"
         self.name = kwargs.get('name')
         self.id = kwargs.get('id')
         self.steps = []
@@ -328,9 +329,6 @@ class Action(Step):
     def copy(self):
         return Action.from_string(self.to_string())
 
-    def get_type_name(self):
-        return "Action"
-
 
 def action_step_constructor(loader, node):
     fields = loader.construct_mapping(node, deep=True)
@@ -357,7 +355,8 @@ def action_step_representer(dumper, data):
                                                      'steps': data.steps,
                                                      'selected_step_id': data.selected_step_id,
                                                      'name': data.name,
-                                                     'id': data.id})
+                                                     'id': data.id,
+                                                     'step_type': data.step_type})
 
 
 yaml.add_representer(Action, action_step_representer)

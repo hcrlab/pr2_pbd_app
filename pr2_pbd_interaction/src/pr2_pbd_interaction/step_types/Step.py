@@ -18,6 +18,7 @@ class Step:
     interactive_marker_server = None
 
     def __init__(self, *args, **kwargs):
+        self.step_type = "Step"
         self.strategy = Strategy.FAIL_FAST
         # If self.is_while, execute step in a loop until a condition fails. Else execute step once.
         self.is_while = False
@@ -74,6 +75,3 @@ class Step:
     def reset_viz(self):
         self.interactive_marker_server.clear()
         self.interactive_marker_server.applyChanges()
-
-    def get_type_name(self):
-        return "Step"

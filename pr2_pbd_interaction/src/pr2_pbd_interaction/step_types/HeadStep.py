@@ -16,6 +16,7 @@ class HeadStep(Step):
 
     def __init__(self, *args, **kwargs):
         Step.__init__(self, *args, **kwargs)
+        self.step_type = "HeadStep"
         self.head_position = None
         if len(args) > 0:
             self.head_position = args[0]
@@ -68,9 +69,6 @@ class HeadStep(Step):
                 return
             if not self.is_while:
                 return
-
-    def get_type_name(self):
-        return "HeadStep"
 
     def distance_from_real(self):
         from pr2_pbd_interaction.Robot import Robot
