@@ -34,13 +34,13 @@ window.addEventListener("load", function() {
 	  return decodeURI(window.location.search.replace(new RegExp("^(?:.*[&\\?]" + encodeURI(sVar).replace(/[\.\+\*]/g, "\\$&") + "(?:\\=([^&]*))?)?.*$", "i"), "$1"));
 	};
 
-	if (loadPageVar("visual").toLowerCase() == "true") {
-		var iFrame = document.createElement("iframe");
-		iFrame.src = "visual.html";
-		iFrame.style.width = "100%";
-		iFrame.style.height = "600px";
-		document.querySelector("#visualSection").appendChild(iFrame);
-	}
+//	if (loadPageVar("visual").toLowerCase() == "true") {
+//		var iFrame = document.createElement("iframe");
+//		iFrame.src = "visual.html";
+//		iFrame.style.width = "100%";
+//		iFrame.style.height = "600px";
+//		document.querySelector("#visualSection").appendChild(iFrame);
+//	}
 
 
 	//hook up buttons with com attribute to speech commands
@@ -132,17 +132,22 @@ window.addEventListener("load", function() {
 
 			var outerCont = document.createElement("div");
 
-			var sel = document.createElement("select");
-			sel.innerHTML = "<option value='0'>Action</option>" + 
-				"<option value='1'>Pose</option><option value='3'>Trajectory</option>";
-			outerCont.appendChild(sel);
+//			var sel = document.createElement("select");
+//			sel.innerHTML = "<option value='Action'>Action</option>" +
+//				"<option value='ManipulationStep'>ManipulationStep</option>";
+//			outerCont.appendChild(sel);
 
 			//html for stuff besides +/-, and type buttons
-			var genHtml = function(actType) {
+			var genHtml = function(step_act) {
+			    var actType = step_act.step_type
 				var stepCont = document.createElement("span");
 
+                var typeLabel = document.createElement("span");
+                typeLabel.innerHTML = actType;
+                stepCont.appendChild(typeLabel);
+
 				switch (actType) {
-					case 0://action
+					case "Action"://action
 						sel.selectedIndex = 0;
 						var actsSelect = document.createElement("select");
 						actsSelect.innerHTML = state.action_names.reduce(function(c, nm) {
@@ -167,155 +172,76 @@ window.addEventListener("load", function() {
 							}));
 						});
 						break;
-					case 1://pose
-						sel.selectedIndex = 1;
-						var recPose = document.createElement("button");
-						recPose.innerHTML = "record";
-						stepCont.appendChild(recPose);
-						recPose.addEventListener("click", function() {
-							guiPub.publish(new ROSLIB.Message({
-								command: "select-action-step",
-								param: (i + 1)
-							}));
-							speechPub.publish(new ROSLIB.Message({
-								command: "delete-last-step"
-							}));
-							speechPub.publish(new ROSLIB.Message({
-								command: "save-pose"
-							}));
-						});
+					case "ManipulationStep"://manipulation
+					    var stepTable = document.createElement("table")
+					    step_act.arm_steps.forEach(function(step, arm_step_index) {
+					            var stepRow = document.createElement("tr")
+                                var stepIndexNode = document.createTextNode(arm_step_index);
+                                stepRow.appendChild(stepIndexNode);
+					            var selectButton = document.createElement("button");
+                                selectButton.innerHTML = "Select";
+                                stepRow.appendChild(selectButton);
+                                selectButton.addEventListener("click", function() {
+                                    guiPub.publish(new ROSLIB.Message({
+                                        command: "select-arm-step",
+                                        param: arm_step_index
+                                    }));
+				                 });
+                                stepTable.appendChild(stepRow);
+				        });
+                        stepCont.appendChild(stepTable);
 						break;
 					case 2://gripper
 						
 						break;
-					case 3://trajectory
-						sel.selectedIndex = 2;
-						var recBut = document.createElement("button");
-						recBut.innerHTML = "Record";
-						stepCont.appendChild(recBut);
-						recBut.addEventListener("click", function() {
-							if (roboState.recording) {
-								recBut.innerHTML = "Record";
-								speechPub.publish(new ROSLIB.Message({
-									command: "stop-recording-motion"
-								}));
-							} else {
-								window.lockUpdate = true;
-								recBut.innerHTML = "Stop";
-								guiPub.publish(new ROSLIB.Message({
-									command: "select-action-step",
-									param: (i + 1)
-								}));
-								speechPub.publish(new ROSLIB.Message({
-									command: "delete-last-step"
-								}));
-								speechPub.publish(new ROSLIB.Message({
-									command: "start-recording-motion"
-								}));
-							}
-							roboState.recording = !roboState.recording;
-						});
-						break;
+					default:
+					    break;
 				}
-
-				["right", "left"].forEach(function(arm_name, arm_ind) {
-					var selRefFrame = document.createElement("select");
-					state.object_names.forEach(function(oName) {
-						var opt = document.createElement("option");
-						opt.value = oName;
-						opt.innerHTML = oName;
-						selRefFrame.appendChild(opt);
-					});
-					var spanSideName = document.createElement("span");
-					spanSideName.appendChild(document.createTextNode(arm_name + " reference frame"));
-					stepCont.appendChild(spanSideName);
-
-					stepCont.appendChild(selRefFrame);
-					selRefFrame.addEventListener("change", function() {
-						guiPub.publish(new ROSLIB.Message({
-							command: "select-action-step",
-							param: (i)
-						}));
-						speechPub.publish(new ROSLIB.Message({
-							command: "set-step-relativity-" + arm_name + " " + selRefFrame.value
-						}));
-					});
-					selRefFrame.selectedIndex = state.object_names.indexOf(step_act.landmark_types[arm_ind].friendly_name);
-				});
-
-				var selScanMode = document.createElement("select");
-				["set-step-to-no-scan", "set-step-to-scan", "set-step-to-scan-move-arms"].forEach(function(oName) {
-					var opt = document.createElement("option");
-					opt.value = oName;
-					opt.innerHTML = oName;
-					selScanMode.appendChild(opt);
-				});
-				stepCont.appendChild(selScanMode);
-				selScanMode.addEventListener("change", function() {
-					guiPub.publish(new ROSLIB.Message({
-						command: "select-action-step",
-						param: (i)
-					}));
-					speechPub.publish(new ROSLIB.Message({
-						command: selScanMode.value
-					}));
-				});
-				selScanMode.selectedIndex = step_act.scan_code;
 
 				return stepCont;
 			};
 
-			sel.addEventListener("change", function () {
-				outerCont.querySelector("span").remove();
-				outerCont.appendChild(genHtml(parseInt(sel.value)));
-			})
+//			sel.addEventListener("change", function () {
+//				outerCont.querySelector("span").remove();
+//				outerCont.appendChild(genHtml(sel.value));
+//			})
 
-			outerCont.appendChild(genHtml(step_act.type));
+			outerCont.appendChild(genHtml(step_act));
 
 			return outerCont;
 		};
 
 		//button to add a step
 		var addBut = document.createElement("button");
-		addBut.innerHTML = "+";
+		addBut.innerHTML = "Save pose";
 		addButSpan.appendChild(addBut);
 		addBut.addEventListener("click", function() {
-			guiPub.publish(new ROSLIB.Message({
-				command: "select-action-step",
-				param: 0
-			}));
 			speechPub.publish(new ROSLIB.Message({
 				command: "save-pose"
 			}));
 		});
 
 		//go though action steps and add them all to the gui
-		action.actions.forEach(function(step_act, i) {
+		action.steps.forEach(function(step_act, i) {
 			var delBut = document.createElement("button");
-			delBut.innerHTML = "-";
+			delBut.innerHTML = "Delete step";
 			delButSpan.appendChild(delBut);
 			delBut.addEventListener("click", function() {
 				guiPub.publish(new ROSLIB.Message({
-					command: "select-action-step",
-					param: (i + 1)
-				}));
-				speechPub.publish(new ROSLIB.Message({
-					command: "delete-last-step"
+					command: "delete-step",
+					param: i
 				}));
 			});
-
-			var addBut = document.createElement("button");
-			addBut.innerHTML = "+";
-			addButSpan.appendChild(addBut);
-			addBut.addEventListener("click", function() {
-				guiPub.publish(new ROSLIB.Message({
-					command: "select-action-step",
-					param: (i + 1)
-				}));
-				speechPub.publish(new ROSLIB.Message({
-					command: "save-pose"
-				}));
-			});
+//
+//			var addBut = document.createElement("button");
+//			addBut.innerHTML = "+";
+//			addButSpan.appendChild(addBut);
+//			addBut.addEventListener("click", function() {
+//				speechPub.publish(new ROSLIB.Message({
+//					command: "save-pose"
+//				}));
+//				//TODO select arm pose in GUI
+//			});
 			stepsSpan.appendChild(dispStep(step_act, i));
 		});
 	};
