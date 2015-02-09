@@ -331,9 +331,15 @@ class Arm:
 
     def move_to_joints(self, joints, time_to_joint):
         '''Moves the arm to the desired joints'''
-        self.arm_commander.set_joint_value_target(dict(zip(self.joint_names, joints)))
+        updated_joints = []
+        for (joint_name, joint) in zip(self.joint_names, joints):
+            rollover = 0
+            if 'wrist_roll_joint' in joint_name or 'forearm_roll_joint' in joint_name:
+                rollover = int(round((joint / 2) / pi))
+            updated_joints.append(joint - rollover * 2 * pi)
+        self.arm_commander.set_joint_value_target(dict(zip(self.joint_names, updated_joints)))
         self.arm_commander.plan()
-        print self.arm_commander.go(wait=False)
+        self.arm_commander.go(wait=False)
 
     #TODO
     def is_executing(self):
