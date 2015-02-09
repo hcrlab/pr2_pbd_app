@@ -31,7 +31,7 @@ class Action(Step):
     """ Class for referencing a previously saved action by its name or id.
     """
     #TODO: the directory stuff should probably be moved to another place - Session?
-    ACTION_DIRECTORY = "/home/sonyaa/pbd_actions/"
+    ACTION_DIRECTORY = "/home/sonyaa/pbd_actions_hydro/"
     FILE_EXTENSION = ".yaml"
 
     def __init__(self, *args, **kwargs):  #(self, id=None, name=None):
