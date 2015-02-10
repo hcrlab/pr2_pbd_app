@@ -49,72 +49,64 @@ class Action(Step):
         from pr2_pbd_interaction.Robot import Robot
 
         robot = Robot.get_robot()
-        # If self.is_while, execute everything in a loop until a condition fails. Else execute everything once.
-        while True:
-            if not self.ignore_conditions:
-                for condition in [self.conditions[i] for i in self.condition_order]:
-                    if not condition.check():
-                        rospy.logwarn("Condition failed when executing action.")
-                        if self.is_while:
-                            #TODO
-                            return
-                        strategy = condition.available_strategies[condition.current_strategy_index]
-                        if strategy == Strategy.FAIL_FAST:
-                            rospy.loginfo("Strategy is to fail-fast, stopping.")
-                            robot.status = ExecutionStatus.CONDITION_FAILED
-                            raise ConditionError()
-                        elif strategy == Strategy.SKIP_STEP:
-                            rospy.loginfo("Strategy is to skip step, skipping.")
-                            self.execution_status = StepExecutionStatus.SKIPPED
-                            return
-                        elif strategy == Strategy.CONTINUE:
-                            rospy.loginfo("Strategy is to continue, ignoring condition failure.")
-                        elif strategy == Strategy.GO_TO_PREVIOUS_STEP:
-                            rospy.loginfo("Strategy is to go to previous step.")
-                            if action_data is not None:
-                                action_data.go_back = True
-                            else:
-                                rospy.logwarn("Cannot go to previous step, no action data provided.")
-                            return
+        if not self.ignore_conditions:
+            for condition in self.conditions:
+                if not condition.check():
+                    rospy.logwarn("Condition failed when executing action.")
+                    strategy = condition.available_strategies[condition.current_strategy_index]
+                    if strategy == Strategy.FAIL_FAST:
+                        rospy.loginfo("Strategy is to fail-fast, stopping.")
+                        robot.status = ExecutionStatus.CONDITION_FAILED
+                        raise ConditionError()
+                    elif strategy == Strategy.SKIP_STEP:
+                        rospy.loginfo("Strategy is to skip step, skipping.")
+                        self.execution_status = StepExecutionStatus.SKIPPED
+                        return
+                    elif strategy == Strategy.CONTINUE:
+                        rospy.loginfo("Strategy is to continue, ignoring condition failure.")
+                    elif strategy == Strategy.GO_TO_PREVIOUS_STEP:
+                        rospy.loginfo("Strategy is to go to previous step.")
+                        if action_data is not None:
+                            action_data.go_back = True
                         else:
-                            rospy.logwarn("Unknown strategy " + str(self.strategy))
-            else:
-                rospy.loginfo('Ignoring conditions for action step')
-            cur_status = None
-            i = 0
-            while i < len(self.steps):
-                step = self.steps[i]
-                step.set_previous_step_status(cur_status)
-                if robot.preempt:
-                    # robot.preempt = False
-                    robot.status = ExecutionStatus.PREEMPTED
-                    rospy.logerr('Execution of action step failed, execution preempted by user.')
-                    raise StoppedByUserError()
-                try:
-                    if robot.status == ExecutionStatus.EXECUTING:
-                        step.execute(self.action_data)
-                        cur_status = step.get_execution_status()
-                        rospy.loginfo('Step ' + str(i) + ' of action step is complete. Status is ' + str(cur_status))
-                        if self.action_data.go_back:
-                            if i < 0:
-                                rospy.logerr('Action failed: cannot go back to step ' + str(i))
-                                self.execution_status = StepExecutionStatus.FAILED
-                                return
-                            i -= 1
-                            rospy.loginfo('Going back to previous step: step number ' + str(i))
-                        else:
-                            i += 1
-                        self.action_data.go_back = False
+                            rospy.logwarn("Cannot go to previous step, no action data provided.")
+                        return
+                    else:
+                        rospy.logwarn("Unknown strategy " + str(self.strategy))
+        else:
+            rospy.loginfo('Ignoring conditions for action step')
+        cur_status = None
+        i = 0
+        while i < len(self.steps):
+            step = self.steps[i]
+            step.set_previous_step_status(cur_status)
+            if robot.preempt:
+                # robot.preempt = False
+                robot.status = ExecutionStatus.PREEMPTED
+                rospy.logerr('Execution of action step failed, execution preempted by user.')
+                raise StoppedByUserError()
+            try:
+                if robot.status == ExecutionStatus.EXECUTING:
+                    step.execute(self.action_data)
+                    cur_status = step.get_execution_status()
+                    rospy.loginfo('Step ' + str(i) + ' of action step is complete. Status is ' + str(cur_status))
+                    if self.action_data.go_back:
+                        if i < 0:
+                            rospy.logerr('Action failed: cannot go back to step ' + str(i))
+                            self.execution_status = StepExecutionStatus.FAILED
+                            return
+                        i -= 1
+                        rospy.loginfo('Going back to previous step: step number ' + str(i))
+                    else:
+                        i += 1
+                    self.action_data.go_back = False
 
-                except Exception as e:
-                    rospy.logerr("Execution of an action failed: " + str(e))
-                    self.execution_status = StepExecutionStatus.FAILED
-                    return
-
-            self.execution_status = cur_status
-
-            if not self.is_while:
+            except Exception as e:
+                rospy.logerr("Execution of an action failed: " + str(e))
+                self.execution_status = StepExecutionStatus.FAILED
                 return
+
+        self.execution_status = cur_status
 
     def get_lock(self):
         try:
@@ -140,12 +132,6 @@ class Action(Step):
             self.steps.pop(index)
         self.get_lock().release()
 
-    def set_loop_step(self, index, is_loop):
-        self.get_lock().acquire()
-        if len(self.steps) > 0 and index < len(self.steps):
-            self.steps[index].is_while = is_loop
-        self.get_lock().release()
-
     def set_ignore_conditions(self, index, ignore_conditions):
         self.get_lock().acquire()
         if len(self.steps) > 0 and index < len(self.steps):
@@ -163,12 +149,6 @@ class Action(Step):
             if not done:
                 rospy.logwarn(
                     "Couldn't set object similarity threshold because the step has no SpecificObjectCondition.")
-        self.get_lock().release()
-
-    def set_step_condition_order(self, index, cond_order):
-        self.get_lock().acquire()
-        if len(self.steps) > 0 and index < len(self.steps):
-            self.steps[index].set_condition_order(cond_order)
         self.get_lock().release()
 
     def select_step(self, step_id):
@@ -333,10 +313,8 @@ class Action(Step):
 def action_step_constructor(loader, node):
     fields = loader.construct_mapping(node, deep=True)
     step = Action(fields)
-    step.is_while = fields['is_while']
     step.ignore_conditions = fields['ignore_conditions']
     step.conditions = fields['conditions']
-    step.condition_order = fields['condition_order']
     step.steps = fields['steps']
     step.selected_step_id = fields['selected_step_id']
     step.name = fields.get('name')
@@ -348,10 +326,8 @@ yaml.add_constructor(u'!ActionStep', action_step_constructor)
 
 
 def action_step_representer(dumper, data):
-    return dumper.represent_mapping(u'!ActionStep', {'is_while': data.is_while,
-                                                     'ignore_conditions': data.ignore_conditions,
+    return dumper.represent_mapping(u'!ActionStep', {'ignore_conditions': data.ignore_conditions,
                                                      'conditions': data.conditions,
-                                                     'condition_order': data.condition_order,
                                                      'steps': data.steps,
                                                      'selected_step_id': data.selected_step_id,
                                                      'name': data.name,

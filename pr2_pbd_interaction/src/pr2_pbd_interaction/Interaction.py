@@ -5,8 +5,6 @@ import roslib
 roslib.load_manifest('pr2_pbd_interaction')
 from pr2_pbd_interaction.condition_types.GripperCondition import GripperCondition
 from pr2_pbd_interaction.step_types.ArmStep import ArmStep
-from pr2_pbd_interaction.step_types.BaseStep import BaseStep
-from pr2_pbd_interaction.step_types.HeadStep import HeadStep
 
 
 # Generic libraries
@@ -70,12 +68,10 @@ class Interaction:
             Command.PREV_ACTION: Response(self.previous_action, None),
             Command.SAVE_ACTION: Response(self.save_action, None),
             Command.SAVE_POSE: Response(self.save_arm_step, None),
-            Command.SAVE_LOCATION: Response(self.save_base_step, None),
             Command.RECORD_OBJECT_POSE: Response(
                 self.record_object_pose, None),
             Command.LOOK_DOWN: Response(self.look_down, None),
             Command.LOOK_FORWARD: Response(self.look_forward, None),
-            Command.SAVE_HEAD_POSE: Response(self.save_head_step, None),
             Command.START_RECORDING_MOTION: Response(
                 self.start_recording, None),
             Command.STOP_RECORDING_MOTION: Response(self.stop_recording, None)
@@ -417,61 +413,17 @@ class Interaction:
         else:
             return [RobotSpeech.ERROR_NO_SKILLS, GazeGoal.SHAKE]
 
-    def save_base_step(self, dummy=None):
-        """ Save current base state as an action step
-        """
-        if (self.session.n_actions() > 0):
-            if (Interaction._is_programming):
-                base_pose = self.robot.get_base_state()
-                self.session.add_step_to_action(BaseStep(base_pose))
-                return [RobotSpeech.BASE_STEP_RECORDED, GazeGoal.NOD]
-            else:
-                action_name = self.session.get_action_name(self.session.current_action_index)
-                if action_name is None:
-                    action_name = str(self.session.current_action_index)
-                return ['Action ' + action_name +
-                        RobotSpeech.ERROR_NOT_IN_EDIT, GazeGoal.SHAKE]
-        else:
-            return [RobotSpeech.ERROR_NO_SKILLS, GazeGoal.SHAKE]
-
     def look_down(self, dummy=None):
         '''Makes the head look down and saves head pose'''
         Response.perform_gaze_action(GazeGoal.LOOK_DOWN)
         speech_response = RobotSpeech.LOOKING_DOWN
-        if (Interaction._is_programming and self.session.n_actions() > 0):
-            time.sleep(2)
-            self.save_head_step()
-            speech_response = (speech_response + ' ' +
-                               RobotSpeech.HEAD_STEP_RECORDED)
         return [speech_response, None]
 
     def look_forward(self, dummy=None):
         '''Makes the head look forward and saves head pose'''
         Response.perform_gaze_action(GazeGoal.LOOK_FORWARD)
         speech_response = RobotSpeech.LOOKING_FORWARD
-        if (Interaction._is_programming and self.session.n_actions() > 0):
-            time.sleep(2)
-            self.save_head_step()
-            speech_response = (speech_response + ' ' +
-                               RobotSpeech.HEAD_STEP_RECORDED)
         return [speech_response, None]
-
-    def save_head_step(self, dummy=None):
-        """Saves current head state as an action step"""
-        if (self.session.n_actions() > 0):
-            if (Interaction._is_programming):
-                head_state = self.robot.get_head_position()
-                step = HeadStep(head_state)
-                self.session.add_step_to_action(step)
-                return [RobotSpeech.HEAD_STEP_RECORDED, None]
-            else:
-                action_name = self.session.get_action_name(self.session.current_action_index)
-                if action_name is None:
-                    action_name = str(self.session.current_action_index)
-                return ['Action ' + action_name +
-                        RobotSpeech.ERROR_NOT_IN_EDIT, GazeGoal.SHAKE]
-        else:
-            return [RobotSpeech.ERROR_NO_SKILLS, GazeGoal.SHAKE]
 
     def _get_arm_states(self):
         '''Returns the current arms states in the right format'''
@@ -630,13 +582,6 @@ class Interaction:
                     step_no = command.param
                     self.session.deselect_arm_step(step_no)
                     rospy.loginfo('Deselected arm step ' + str(step_no))
-                elif (command.command == GuiCommand.SET_LOOP_STEP):
-                    step_no = command.param
-                    self.session.set_loop_step(step_no, True)
-                    rospy.loginfo('Made step ' + str(step_no) + ' into a while loop')
-                elif (command.command == GuiCommand.SET_NO_LOOP_STEP):
-                    step_no = command.param
-                    self.session.set_loop_step(step_no, False)
                 elif (command.command == GuiCommand.SET_IGNORE_CONDITIONS):
                     step_no = command.param
                     self.session.set_ignore_conditions(step_no, True)
@@ -669,16 +614,6 @@ class Interaction:
                     threshold = command.param_float
                     self.session.set_object_similarity_threshold(step_no, threshold)
                     rospy.loginfo('Changed object similarity threshold for step ' + str(step_no))
-                elif (command.command == GuiCommand.SET_CONDITION_ORDER):
-                    step_no = command.param
-                    cond_order = command.param_list
-                    self.session.set_condition_order(step_no, cond_order)
-                    rospy.loginfo('Changed condition order for step ' + str(step_no))
-                elif (command.command == GuiCommand.SET_ARM_STEP_CONDITION_ORDER):
-                    arm_step_no = command.param
-                    cond_order = command.param_list
-                    self.session.set_arm_step_condition_order(arm_step_no, cond_order)
-                    rospy.loginfo('Changed condition order for arm step ' + str(arm_step_no))
                 else:
                     rospy.logwarn('\033[32m This command (' + command.command
                                   + ') is unknown. \033[0m')

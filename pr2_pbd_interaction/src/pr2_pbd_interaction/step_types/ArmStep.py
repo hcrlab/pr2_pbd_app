@@ -20,7 +20,6 @@ class ArmStep(Step):
         Step.__init__(self, *args, **kwargs)
         self.step_type = "ArmStep"
         self.conditions = [GripperCondition()]
-        self.condition_order = range(len(self.conditions))
         self.type = ArmStep.ARM_TARGET
         self.armTarget = None
         self.armTrajectory = None
@@ -46,115 +45,108 @@ class ArmStep(Step):
         from pr2_pbd_interaction.Robot import Robot
 
         robot = Robot.get_robot()
-        # If self.is_while, execute everything in a loop until a condition fails. Else execute everything once.
-        while True:
-            if not self.ignore_conditions:
-                for condition in [self.conditions[i] for i in self.condition_order]:
-                    if not condition.check():
-                        rospy.logwarn("Condition failed when executing arm step.")
-                        if self.is_while:
-                            #TODO
-                            return
-                        strategy = condition.available_strategies[condition.current_strategy_index]
-                        if strategy == Strategy.FAIL_FAST:
-                            rospy.loginfo("Strategy is to fail-fast, stopping.")
-                            robot.status = ExecutionStatus.CONDITION_FAILED
-                            raise ConditionError()
-                        elif strategy == Strategy.SKIP_STEP:
-                            rospy.loginfo("Strategy is to skip step, skipping.")
-                            self.execution_status = StepExecutionStatus.SKIPPED
-                            return
-                        elif strategy == Strategy.CONTINUE:
-                            rospy.loginfo("Strategy is to continue, ignoring condition failure.")
-                        elif strategy == Strategy.GO_TO_PREVIOUS_STEP:
-                            rospy.loginfo("Strategy is to go to previous step.")
-                            action_data.go_back = True
-                            return
-                        else:
-                            rospy.logwarn("Unknown strategy " + str(self.strategy))
-            else:
-                rospy.loginfo('Ignoring conditions for arm step')
-            if robot.preempt:
-                # robot.preempt = False
-                robot.status = ExecutionStatus.PREEMPTED
-                rospy.logerr('Execution of arm step failed, execution preempted by user.')
-                raise StoppedByUserError()
-            # send a request to Robot to move the arms to their respective targets
-            if (self.type == ArmStep.ARM_TARGET):
-                rospy.loginfo('Will perform arm target action step.')
+        if not self.ignore_conditions:
+            for condition in self.conditions:
+                if not condition.check():
+                    rospy.logwarn("Condition failed when executing arm step.")
+                    strategy = condition.available_strategies[condition.current_strategy_index]
+                    if strategy == Strategy.FAIL_FAST:
+                        rospy.loginfo("Strategy is to fail-fast, stopping.")
+                        robot.status = ExecutionStatus.CONDITION_FAILED
+                        raise ConditionError()
+                    elif strategy == Strategy.SKIP_STEP:
+                        rospy.loginfo("Strategy is to skip step, skipping.")
+                        self.execution_status = StepExecutionStatus.SKIPPED
+                        return
+                    elif strategy == Strategy.CONTINUE:
+                        rospy.loginfo("Strategy is to continue, ignoring condition failure.")
+                    elif strategy == Strategy.GO_TO_PREVIOUS_STEP:
+                        rospy.loginfo("Strategy is to go to previous step.")
+                        action_data.go_back = True
+                        return
+                    else:
+                        rospy.logwarn("Unknown strategy " + str(self.strategy))
+        else:
+            rospy.loginfo('Ignoring conditions for arm step')
+        if robot.preempt:
+            # robot.preempt = False
+            robot.status = ExecutionStatus.PREEMPTED
+            rospy.logerr('Execution of arm step failed, execution preempted by user.')
+            raise StoppedByUserError()
+        # send a request to Robot to move the arms to their respective targets
+        if (self.type == ArmStep.ARM_TARGET):
+            rospy.loginfo('Will perform arm target action step.')
 
-                if (not robot.move_to_joints(self.armTarget.rArm,
-                                             self.armTarget.lArm)):
-                    if robot.preempt:
-                        robot.status = ExecutionStatus.PREEMPTED
-                        rospy.logerr('Execution of arm step failed, execution preempted by user.')
-                        raise StoppedByUserError()
-                    rospy.logwarn('Arms failed to reach target')
-                    self.execution_status = StepExecutionStatus.FAILED
-                    return
-            # If arm trajectory action
-            elif (self.type == ArmStep.ARM_TRAJECTORY):
-                rospy.loginfo('Will perform arm trajectory action step.')
-                # First move to the start frame
-                if (not robot.move_to_joints(self.armTrajectory.r_arm[0],
-                                             self.armTrajectory.l_arm[0])):
-                    if robot.preempt:
-                        robot.status = ExecutionStatus.PREEMPTED
-                        rospy.logerr('Execution of arm step failed, execution preempted by user.')
-                        raise StoppedByUserError()
-                    rospy.logwarn('Arms failed to reach target')
-                    self.execution_status = StepExecutionStatus.FAILED
-                    return
-
-                #  Then execute the trajectory
-                Robot.arms[0].exectute_joint_traj(self.armTrajectory.r_arm,
-                                                  self.armTrajectory.timing)
-                Robot.arms[1].exectute_joint_traj(self.armTrajectory.l_arm,
-                                                  self.armTrajectory.timing)
-
-                # Wait until both arms complete the trajectory
-                while ((Robot.arms[0].is_executing() or Robot.arms[1].is_executing())
-                       and not robot.preempt):
-                    time.sleep(0.01)
-                rospy.loginfo('Trajectory complete.')
-
-                # Verify that both arms succeeded
-                if ((not Robot.arms[0].is_successful()) or
-                        (not Robot.arms[1].is_successful())):
-                    rospy.logwarn('Aborting execution; ' +
-                                  'arms failed to follow trajectory.')
-                    self.execution_status = StepExecutionStatus.FAILED
-                    return
-
-            # If hand action do it for both sides
-            if (self.gripperAction.rGripper !=
-                    Robot.arms[0].get_gripper_state()):
-                rospy.loginfo('Will perform right gripper action ' +
-                              str(self.gripperAction.rGripper))
-                Robot.arms[0].set_gripper(self.gripperAction.rGripper)
-                # Response.perform_gaze_action(GazeGoal.FOLLOW_RIGHT_EE)
-
-            if (self.gripperAction.lGripper !=
-                    Robot.arms[1].get_gripper_state()):
-                rospy.loginfo('Will perform LEFT gripper action ' +
-                              str(self.gripperAction.lGripper))
-                Robot.arms[1].set_gripper(self.gripperAction.lGripper)
-                # Response.perform_gaze_action(GazeGoal.FOLLOW_LEFT_EE)
-
-            # Wait for grippers to be done
-            while (Robot.arms[0].is_gripper_moving() or
-                       Robot.arms[1].is_gripper_moving()):
-                time.sleep(0.01)
-            rospy.loginfo('Hands done moving.')
-
-            self.execution_status = StepExecutionStatus.SUCCEEDED
-
-            # Verify that both grippers succeeded
-            if ((not Robot.arms[0].is_gripper_at_goal()) or
-                    (not Robot.arms[1].is_gripper_at_goal())):
-                rospy.logwarn('Hand(s) did not fully close or open!')
-            if not self.is_while:
+            if (not robot.move_to_joints(self.armTarget.rArm,
+                                         self.armTarget.lArm)):
+                if robot.preempt:
+                    robot.status = ExecutionStatus.PREEMPTED
+                    rospy.logerr('Execution of arm step failed, execution preempted by user.')
+                    raise StoppedByUserError()
+                rospy.logwarn('Arms failed to reach target')
+                self.execution_status = StepExecutionStatus.FAILED
                 return
+        # If arm trajectory action
+        elif (self.type == ArmStep.ARM_TRAJECTORY):
+            rospy.loginfo('Will perform arm trajectory action step.')
+            # First move to the start frame
+            if (not robot.move_to_joints(self.armTrajectory.r_arm[0],
+                                         self.armTrajectory.l_arm[0])):
+                if robot.preempt:
+                    robot.status = ExecutionStatus.PREEMPTED
+                    rospy.logerr('Execution of arm step failed, execution preempted by user.')
+                    raise StoppedByUserError()
+                rospy.logwarn('Arms failed to reach target')
+                self.execution_status = StepExecutionStatus.FAILED
+                return
+
+            #  Then execute the trajectory
+            Robot.arms[0].exectute_joint_traj(self.armTrajectory.r_arm,
+                                              self.armTrajectory.timing)
+            Robot.arms[1].exectute_joint_traj(self.armTrajectory.l_arm,
+                                              self.armTrajectory.timing)
+
+            # Wait until both arms complete the trajectory
+            while ((Robot.arms[0].is_executing() or Robot.arms[1].is_executing())
+                   and not robot.preempt):
+                time.sleep(0.01)
+            rospy.loginfo('Trajectory complete.')
+
+            # Verify that both arms succeeded
+            if ((not Robot.arms[0].is_successful()) or
+                    (not Robot.arms[1].is_successful())):
+                rospy.logwarn('Aborting execution; ' +
+                              'arms failed to follow trajectory.')
+                self.execution_status = StepExecutionStatus.FAILED
+                return
+
+        # If hand action do it for both sides
+        if (self.gripperAction.rGripper !=
+                Robot.arms[0].get_gripper_state()):
+            rospy.loginfo('Will perform right gripper action ' +
+                          str(self.gripperAction.rGripper))
+            Robot.arms[0].set_gripper(self.gripperAction.rGripper)
+            # Response.perform_gaze_action(GazeGoal.FOLLOW_RIGHT_EE)
+
+        if (self.gripperAction.lGripper !=
+                Robot.arms[1].get_gripper_state()):
+            rospy.loginfo('Will perform LEFT gripper action ' +
+                          str(self.gripperAction.lGripper))
+            Robot.arms[1].set_gripper(self.gripperAction.lGripper)
+            # Response.perform_gaze_action(GazeGoal.FOLLOW_LEFT_EE)
+
+        # Wait for grippers to be done
+        while (Robot.arms[0].is_gripper_moving() or
+                   Robot.arms[1].is_gripper_moving()):
+            time.sleep(0.01)
+        rospy.loginfo('Hands done moving.')
+
+        self.execution_status = StepExecutionStatus.SUCCEEDED
+
+        # Verify that both grippers succeeded
+        if ((not Robot.arms[0].is_gripper_at_goal()) or
+                (not Robot.arms[1].is_gripper_at_goal())):
+            rospy.logwarn('Hand(s) did not fully close or open!')
 
 
     def copy(self):
@@ -195,7 +187,6 @@ class ArmStep(Step):
         ## WARNING: the following is not really copying
         copy.conditions = self.conditions[:]
         copy.postCond = self.postCond
-        copy.is_while = self.is_while
         copy.ignore_conditions = self.ignore_conditions
         return copy
 

@@ -1,23 +1,8 @@
 <launch>
   <!-- This runs the core of the demo -->
 
-  <arg name="web_gui" default="false" />
-
-  <group if="$(arg web_gui)">
-    <!-- This is the stuff required for web-based GUI -->
-    <include file="$(find pr2_interactive_controller)/launch/web_launch.launch"/>
-  </group>
-
-  <group unless="$(arg web_gui)">
-    <!-- This is the GUI that lets you send speech commands with buttons and displays what the robot would say -->
-    <node name="pr2_pbd_gui" pkg="rqt_gui" type="rqt_gui" output="screen"></node>
-
-    <!-- This is the stuff for visualization (this will run RVIZ) -->
-    <include file="$(find pr2_pbd_interaction)/launch/pr2_manipulation_desktop.launch" />
-    <!-- <include file="$(find pr2_moveit_config)/launch/moveit_rviz.launch" /> -->
-  </group>
-
-
+  <!-- This is the stuff required for web-based GUI -->
+  <include file="$(find pr2_interactive_controller)/launch/web_launch.launch"/>
 
   <node name="soundplay_node" pkg="sound_play" type="soundplay_node.py"/>
 

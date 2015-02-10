@@ -2,11 +2,6 @@
 from interactive_markers.interactive_marker_server import InteractiveMarkerServer
 import rospy
 from visualization_msgs.msg import MarkerArray
-
-from pr2_pbd_interaction.condition_types.PreviousStepCondition import PreviousStepCondition
-from pr2_pbd_interaction.condition_types.PreviousStepNotFailedCondition import PreviousStepNotFailedCondition
-from pr2_pbd_interaction.condition_types.PreviousStepNotSkippedCondition import PreviousStepNotSkippedCondition
-from pr2_pbd_interaction.condition_types.PreviousStepNotSucceededCondition import PreviousStepNotSucceededCondition
 from pr2_pbd_interaction.msg import Strategy
 
 
@@ -20,13 +15,8 @@ class Step:
     def __init__(self, *args, **kwargs):
         self.step_type = "Step"
         self.strategy = Strategy.FAIL_FAST
-        # If self.is_while, execute step in a loop until a condition fails. Else execute step once.
-        self.is_while = False
         self.ignore_conditions = False
-        self.conditions = [PreviousStepNotFailedCondition(), PreviousStepNotSkippedCondition(),
-                           PreviousStepNotSucceededCondition()]
-        self.condition_order = range(len(self.conditions))
-        self.prev_step_status = None
+        self.conditions = []
         self.execution_status = None
         if Step.interactive_marker_server is None:
             im_server = InteractiveMarkerServer('programmed_actions')
@@ -34,9 +24,6 @@ class Step:
         if Step.marker_publisher is None:
             Step.marker_publisher = rospy.Publisher(
                 'visualization_marker_array', MarkerArray)
-
-    def set_is_while(self, is_while):
-        self.is_while = is_while
 
     def set_condition_strategy(self, condition_index, strategy_index):
         if condition_index < len(self.conditions):
@@ -50,15 +37,6 @@ class Step:
 
     def remove_condition(self, index):
         self.conditions.pop(index)
-
-    def set_condition_order(self, order):
-        self.condition_order = order
-
-    def set_previous_step_status(self, status):
-        self.prev_step_status = status
-        for condition in self.conditions:
-            if isinstance(condition, PreviousStepCondition):
-                condition.set_prev_step_status(status)
 
     def get_execution_status(self):
         return self.execution_status

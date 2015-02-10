@@ -283,15 +283,6 @@ class Session:
             rospy.logwarn("Action " + act_name + " not found")
             return False
 
-    def set_loop_step(self, step_id, is_loop):
-        """ Controls if the specified step is a while loop.
-        """
-        if (self.n_actions() > 0):
-            self.actions[self.current_action_index].set_loop_step(step_id, is_loop)
-        else:
-            rospy.logwarn('No skills created yet.')
-        self._update_experiment_state()
-
     def set_ignore_conditions(self, step_id, ignore_conditions):
         """ Controls if the specified step should ignore conditions.
         """
@@ -340,24 +331,6 @@ class Session:
     def set_object_similarity_threshold(self, step_id, threshold):
         if (self.n_actions() > 0):
             self.actions[self.current_action_index].set_object_similarity_threshold(step_id, threshold)
-        else:
-            rospy.logwarn('No skills created yet.')
-        self._update_experiment_state()
-
-    def set_condition_order(self, step_id, cond_order):
-        if (self.n_actions() > 0):
-            self.actions[self.current_action_index].set_step_condition_order(step_id, cond_order)
-        else:
-            rospy.logwarn('No skills created yet.')
-        self._update_experiment_state()
-
-    def set_arm_step_condition_order(self, step_id, cond_order):
-        if (self.n_actions() > 0):
-            current_step = self.get_current_step()
-            if isinstance(current_step, ManipulationStep):
-                current_step.set_arm_step_condition_order(step_id, cond_order)
-            else:
-                rospy.logwarn('Current step is not ManipulationStep, cannot set condition order for arm step.')
         else:
             rospy.logwarn('No skills created yet.')
         self._update_experiment_state()

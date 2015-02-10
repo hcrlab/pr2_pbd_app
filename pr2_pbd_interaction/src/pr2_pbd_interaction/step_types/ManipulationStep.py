@@ -19,16 +19,14 @@ def manipulation_step_constructor(loader, node):
 
     fields = loader.construct_mapping(node, deep=True)
     m_step = ManipulationStep()
-    m_step.is_while = fields['is_while']
+    m_step.head_position = fields['head_position']
     m_step.ignore_conditions = fields['ignore_conditions']
     m_step.conditions = fields['conditions']
-    m_step.condition_order = fields['condition_order']
     m_step.arm_steps = fields['arm_steps']
     m_step.objects = fields.get('objects', [])
     # if the robot hasn't been initialized yet, that means we're on client side, so we don't need anything
     # except arm steps and basic step members
     if len(Robot.arms) == 2:  # if the robot is initialized, construct ArmStepMarkerSequence
-        world_objects = World.get_world().get_frame_list()
         m_step.marker_sequence = ArmStepMarkerSequence.construct_from_arm_steps(m_step.interactive_marker_server,
                                                                                 m_step.marker_publisher,
                                                                                 m_step.step_click_cb, m_step.arm_steps,
@@ -42,6 +40,8 @@ yaml.add_constructor(u'!ManipulationStep', manipulation_step_constructor)
 class ManipulationStep(Step):
     """ Sequence of ArmSteps.
     """
+    ACTION_DIRECTORY = "/home/sonyaa/pbd_manipulation_saved/"
+    FILE_EXTENSION = ".yaml"
 
     def __init__(self, *args, **kwargs):
         from pr2_pbd_interaction.Session import Session
@@ -50,6 +50,8 @@ class ManipulationStep(Step):
         Step.__init__(self, *args, **kwargs)
         self.step_type = "ManipulationStep"
         self.arm_steps = []
+        self.name = kwargs.get('name')
+        self.id = kwargs.get('id')
         if len(Robot.arms) < 2:
             # if the robot hasn't been initialized yet, that means we're on client side, so we don't need anything
             # except arm steps and basic step members
@@ -57,7 +59,6 @@ class ManipulationStep(Step):
         self.head_position = Robot.get_head_position()
         self.lock = threading.Lock()
         self.conditions.extend([SpecificObjectCondition(), IKCondition()])
-        self.condition_order = range(len(self.conditions))
         self.step_click_cb = Session.get_session().selected_arm_step_cb
         self.marker_sequence = ArmStepMarkerSequence(Step.interactive_marker_server, Step.marker_publisher,
                                                      self.step_click_cb, self.reference_change_cb)
@@ -67,89 +68,67 @@ class ManipulationStep(Step):
         from pr2_pbd_interaction.Robot import Robot
 
         robot = Robot.get_robot()
-        # If self.is_while, execute everything in a loop until a condition fails. Else execute everything once.
-        while True:
-            if not self.ignore_conditions:
-                for condition in [self.conditions[i] for i in self.condition_order]:
-                    if isinstance(condition, IKCondition):
-                        condition.set_steps(self.arm_steps)
-                    if not condition.check():
-                        rospy.logwarn("Condition failed when executing manipulation step.")
-                        if self.is_while:
-                            #TODO
-                            return
-                        strategy = condition.available_strategies[condition.current_strategy_index]
-                        if strategy == Strategy.FAIL_FAST:
-                            rospy.loginfo("Strategy is to fail-fast, stopping.")
-                            robot.status = ExecutionStatus.CONDITION_FAILED
-                            raise ConditionError()
-                        elif strategy == Strategy.SKIP_STEP:
-                            rospy.loginfo("Strategy is to skip step, skipping.")
-                            self.execution_status = StepExecutionStatus.SKIPPED
-                            return
-                        elif strategy == Strategy.CONTINUE:
-                            rospy.loginfo("Strategy is to continue, ignoring condition failure.")
-                        elif strategy == Strategy.GO_TO_PREVIOUS_STEP:
-                            rospy.loginfo("Strategy is to go to previous step.")
-                            action_data.go_back = True
-                            return
-                        else:
-                            rospy.logwarn("Unknown strategy " + str(self.strategy))
-            else:
-                rospy.loginfo('Ignoring conditions for manipulation step')
-            self.update_objects()
-            self.initialize_viz()
-            step_to_execute = self.copy()
-            if not robot.solve_ik_for_manipulation_step(step_to_execute):
-                # Shouldn't get here, this was supposed to be checked by IKCondition.
-                rospy.logwarn('Problems in finding IK solutions...')
-                robot.status = ExecutionStatus.NO_IK
-                rospy.logerr("Execution of a manipulation step failed, unreachable poses.")
-                self.execution_status = StepExecutionStatus.FAILED
-                return
-            else:
-                Robot.set_arm_mode(0, ArmMode.HOLD)
-                Robot.set_arm_mode(1, ArmMode.HOLD)
-                for (i, step) in enumerate(step_to_execute.arm_steps):
-                    if robot.preempt:
-                        # robot.preempt = False
-                        robot.status = ExecutionStatus.PREEMPTED
-                        rospy.logerr('Execution of manipulation step failed, execution preempted by user.')
-                        raise StoppedByUserError()
-                    try:
-                        step.execute(action_data)
-                        rospy.loginfo('Step ' + str(i) + ' of manipulation step is complete.')
-                        if step.execution_status != StepExecutionStatus.SUCCEEDED:
-                            rospy.logerr("Execution of a manipulation step failed because arm step failed")
-                            self.execution_status = StepExecutionStatus.FAILED
-                            return
-                    except Exception as e:
-                        rospy.logerr("Execution of a manipulation step failed: " + str(e))
+        robot.move_head_to_point(self.head_position)
+        if not self.ignore_conditions:
+            for condition in self.conditions:
+                if isinstance(condition, IKCondition):
+                    condition.set_steps(self.arm_steps)
+                if not condition.check():
+                    rospy.logwarn("Condition failed when executing manipulation step.")
+                    strategy = condition.available_strategies[condition.current_strategy_index]
+                    if strategy == Strategy.FAIL_FAST:
+                        rospy.loginfo("Strategy is to fail-fast, stopping.")
+                        robot.status = ExecutionStatus.CONDITION_FAILED
+                        raise ConditionError()
+                    elif strategy == Strategy.SKIP_STEP:
+                        rospy.loginfo("Strategy is to skip step, skipping.")
+                        self.execution_status = StepExecutionStatus.SKIPPED
+                        return
+                    elif strategy == Strategy.CONTINUE:
+                        rospy.loginfo("Strategy is to continue, ignoring condition failure.")
+                    elif strategy == Strategy.GO_TO_PREVIOUS_STEP:
+                        rospy.loginfo("Strategy is to go to previous step.")
+                        action_data.go_back = True
+                        return
+                    else:
+                        rospy.logwarn("Unknown strategy " + str(self.strategy))
+        else:
+            rospy.loginfo('Ignoring conditions for manipulation step')
+        self.update_objects()
+        self.initialize_viz()
+        step_to_execute = self.copy()
+        if not robot.solve_ik_for_manipulation_step(step_to_execute):
+            # Shouldn't get here, this was supposed to be checked by IKCondition.
+            rospy.logwarn('Problems in finding IK solutions...')
+            robot.status = ExecutionStatus.NO_IK
+            rospy.logerr("Execution of a manipulation step failed, unreachable poses.")
+            self.execution_status = StepExecutionStatus.FAILED
+            return
+        else:
+            Robot.set_arm_mode(0, ArmMode.HOLD)
+            Robot.set_arm_mode(1, ArmMode.HOLD)
+            for (i, step) in enumerate(step_to_execute.arm_steps):
+                if robot.preempt:
+                    # robot.preempt = False
+                    robot.status = ExecutionStatus.PREEMPTED
+                    rospy.logerr('Execution of manipulation step failed, execution preempted by user.')
+                    raise StoppedByUserError()
+                try:
+                    step.execute(action_data)
+                    rospy.loginfo('Step ' + str(i) + ' of manipulation step is complete.')
+                    if step.execution_status != StepExecutionStatus.SUCCEEDED:
+                        rospy.logerr("Execution of a manipulation step failed because arm step failed")
                         self.execution_status = StepExecutionStatus.FAILED
                         return
+                except Exception as e:
+                    rospy.logerr("Execution of a manipulation step failed: " + str(e))
+                    self.execution_status = StepExecutionStatus.FAILED
+                    return
 
-            Robot.arms[0].reset_movement_history()
-            Robot.arms[1].reset_movement_history()
+        Robot.arms[0].reset_movement_history()
+        Robot.arms[1].reset_movement_history()
 
-            self.execution_status = StepExecutionStatus.SUCCEEDED
-
-            if not self.is_while:
-                return
-            # If the manipulation step needs objects and we're in a while loop, look for objects again.
-            else:
-                need_objects = False
-                for condition in self.conditions:
-                    if isinstance(condition, SpecificObjectCondition):
-                        if not condition.is_empty():
-                            need_objects = True
-                if need_objects:
-                    robot.move_head_to_point(self.head_position)
-                    world = World.get_world()
-                    if not world.update_object_pose():
-                        rospy.logwarn("Object detection failed.")
-                        return
-                    # Wait for all objects to be detected.
-                    time.sleep(1)
+        self.execution_status = StepExecutionStatus.SUCCEEDED
 
     def add_arm_step(self, arm_step):
         self.lock.acquire()
@@ -332,12 +311,6 @@ class ManipulationStep(Step):
         if len(self.arm_steps) > 0 and index < len(self.arm_steps):
             self.arm_steps[index].ignore_conditions = ignore_conditions
 
-    def set_arm_step_condition_order(self, index, cond_order):
-        self.lock.acquire()
-        if len(self.arm_steps) > 0 and index < len(self.arm_steps):
-            self.arm_steps[index].set_condition_order(cond_order)
-        self.lock.release()
-
     def set_arm_step_condition_strategy(self, index, condition_index, strategy_index):
         self.lock.acquire()
         if len(self.arm_steps) > 0 and index < len(self.arm_steps):
@@ -361,7 +334,6 @@ class ManipulationStep(Step):
     def copy(self):
         copy = ManipulationStep()
         copy.conditions = self.conditions
-        copy.is_while = self.is_while
         copy.ignore_conditions = self.ignore_conditions
         copy.objects = self.objects
         for step in self.arm_steps:
@@ -370,11 +342,10 @@ class ManipulationStep(Step):
 
 
 def manipulation_step_representer(dumper, data):
-    return dumper.represent_mapping(u'!ManipulationStep', {'is_while': data.is_while,
-                                                           'ignore_conditions': data.ignore_conditions,
+    return dumper.represent_mapping(u'!ManipulationStep', {'ignore_conditions': data.ignore_conditions,
                                                            'conditions': data.conditions,
-                                                           'condition_order': data.condition_order,
                                                            'arm_steps': data.arm_steps,
+                                                           'head_position': data.head_position,
                                                            'objects': data.objects,
                                                            'step_type': data.step_type})
 
