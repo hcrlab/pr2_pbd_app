@@ -146,6 +146,17 @@ window.addEventListener("load", function() {
                 typeLabel.innerHTML = actType;
                 stepCont.appendChild(typeLabel);
 
+                var delBut = document.createElement("button");
+                delBut.innerHTML = "Delete step";
+                delButSpan.appendChild(delBut);
+                delBut.addEventListener("click", function() {
+                    guiPub.publish(new ROSLIB.Message({
+                        command: "delete-step",
+                        param: i
+                    }));
+                });
+                stepCont.appendChild(delBut);
+
 				switch (actType) {
 					case "Action"://action
 						sel.selectedIndex = 0;
@@ -211,37 +222,8 @@ window.addEventListener("load", function() {
 			return outerCont;
 		};
 
-		//button to add a step
-		var addBut = document.createElement("button");
-		addBut.innerHTML = "Save pose";
-		addButSpan.appendChild(addBut);
-		addBut.addEventListener("click", function() {
-			speechPub.publish(new ROSLIB.Message({
-				command: "save-pose"
-			}));
-		});
-
 		//go though action steps and add them all to the gui
 		action.steps.forEach(function(step_act, i) {
-			var delBut = document.createElement("button");
-			delBut.innerHTML = "Delete step";
-			delButSpan.appendChild(delBut);
-			delBut.addEventListener("click", function() {
-				guiPub.publish(new ROSLIB.Message({
-					command: "delete-step",
-					param: i
-				}));
-			});
-//
-//			var addBut = document.createElement("button");
-//			addBut.innerHTML = "+";
-//			addButSpan.appendChild(addBut);
-//			addBut.addEventListener("click", function() {
-//				speechPub.publish(new ROSLIB.Message({
-//					command: "save-pose"
-//				}));
-//				//TODO select arm pose in GUI
-//			});
 			stepsSpan.appendChild(dispStep(step_act, i));
 		});
 	};

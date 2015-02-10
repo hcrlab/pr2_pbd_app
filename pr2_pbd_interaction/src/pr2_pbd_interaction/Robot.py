@@ -302,23 +302,22 @@ class Robot:
             self.status = ExecutionStatus.NO_IK
 
     def get_base_state(self):
-        return None
-        # try:
-        #     ref_frame = "/map"
-        #     time = World.get_world().tf_listener.getLatestCommonTime(ref_frame,
-        #                                                  "/base_link")
-        #     (position, orientation) = World.get_world().tf_listener.lookupTransform(
-        #         ref_frame, "/base_link", time)
-        #     base_pose = Pose()
-        #     base_pose.position = Point(position[0], position[1], position[2])
-        #     base_pose.orientation = Quaternion(orientation[0], orientation[1],
-        #                                        orientation[2], orientation[3])
-        #     #rospy.loginfo('Current base pose:')
-        #     #rospy.loginfo(base_pose)
-        #     return base_pose
-        # except Exception as e:
-        #     rospy.logwarn('Something wrong with transform request for base state: ' + str(e))
-        #     return None
+        try:
+            ref_frame = "/map"
+            time = World.get_world().tf_listener.getLatestCommonTime(ref_frame,
+                                                         "/base_link")
+            (position, orientation) = World.get_world().tf_listener.lookupTransform(
+                ref_frame, "/base_link", time)
+            base_pose = Pose()
+            base_pose.position = Point(position[0], position[1], position[2])
+            base_pose.orientation = Quaternion(orientation[0], orientation[1],
+                                               orientation[2], orientation[3])
+            #rospy.loginfo('Current base pose:')
+            #rospy.loginfo(base_pose)
+            return base_pose
+        except Exception as e:
+            rospy.logwarn('Something wrong with transform request for base state: ' + str(e))
+            return None
 
     @staticmethod
     def get_head_position():
