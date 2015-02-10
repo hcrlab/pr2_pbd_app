@@ -9,7 +9,6 @@ string STOP_EXECUTION = stop-execution
 string UNDO = undo-last-command
 string DELETE_ALL_STEPS = delete-all-steps
 string DELETE_LAST_STEP = delete-last-step
-string DELETE_LAST_POSE = delete-last-pose
 string FREEZE_RIGHT_ARM = freeze-right-arm
 string FREEZE_LEFT_ARM = freeze-left-arm
 string RECORD_OBJECT_POSE = record-object-pose

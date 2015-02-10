@@ -1,7 +1,11 @@
 #!/usr/bin/env python
+
+import os.path
+from os import listdir
+from os.path import isfile, join
+from functools import partial
 import threading
 import yaml
-import time
 
 import rospy
 
@@ -50,6 +54,7 @@ class ManipulationStep(Step):
         Step.__init__(self, *args, **kwargs)
         self.step_type = "ManipulationStep"
         self.arm_steps = []
+        self.selected_step_id = -1
         self.name = kwargs.get('name')
         self.id = kwargs.get('id')
         if len(Robot.arms) < 2:
@@ -130,7 +135,7 @@ class ManipulationStep(Step):
 
         self.execution_status = StepExecutionStatus.SUCCEEDED
 
-    def add_arm_step(self, arm_step):
+    def add_step(self, arm_step):
         self.lock.acquire()
         r_object = None
         l_object = None
@@ -271,7 +276,7 @@ class ManipulationStep(Step):
                     break
         self.lock.release()
 
-    def delete_arm_step(self, step_id):
+    def delete_step(self, step_id):
         """ Delete specified step and update visualization.
         """
         self.lock.acquire()
@@ -289,8 +294,8 @@ class ManipulationStep(Step):
                 break
         self.lock.release()
 
-    def delete_last_step_and_update_viz(self):
-        self.delete_arm_step(len(self.arm_steps) - 1)
+    def delete_last_step(self):
+        self.delete_step(len(self.arm_steps) - 1)
 
     def change_requested_steps(self, r_arm, l_arm):
         """Change an arm step to the current end effector
@@ -331,14 +336,80 @@ class ManipulationStep(Step):
                 rospy.loginfo("Changed reference object in SpecificObjectCondition")
                 break
 
+    def get_selected_step_id(self):
+        return self.selected_step_id
+
+    def get_selected_step(self):
+        # self.get_lock().acquire()
+        step = None
+        if len(self.arm_steps) > 0 and self.selected_step_id >= 0:
+            step = self.arm_steps[self.selected_step_id]
+        # self.get_lock().release()
+        return step
+
+    def get_name(self):
+        if self.name is not None:
+            return self.name
+        else:
+            if self.id is None:
+                self.id = 0
+                while os.path.isfile(self.get_file(self.id)):
+                    self.id += 1
+            return 'Manipulation action ' + str(self.id)
+
+    def clear(self):
+        self.reset_viz()
+        self.lock.acquire()
+        del self.arm_steps[:]
+        self.selected_step_id = -1
+        self.lock.release()
+
+    @staticmethod
+    def get_file(action):
+        return ManipulationStep.ACTION_DIRECTORY + str(action) + ManipulationStep.FILE_EXTENSION
+
+    @staticmethod
+    def get_saved_actions():
+        actions = map(ManipulationStep.load,
+                      filter(lambda f: f.endswith(ManipulationStep.FILE_EXTENSION),
+                             filter(isfile,
+                                    map(partial(join, ManipulationStep.ACTION_DIRECTORY),
+                                        listdir(ManipulationStep.ACTION_DIRECTORY)))))
+        actions.sort(key=lambda action: action.id)
+        return actions
+
+    @staticmethod
+    def load(act_f_id):
+        file_path = ""
+        if type(act_f_id) is int:
+            file_path = ManipulationStep.get_file(act_f_id)
+        else:
+            file_path = act_f_id
+        act_file = open(file_path, 'r')
+        act = ManipulationStep.from_string(act_file)
+        act_file.close()
+        return act
+
+    @staticmethod
+    def from_string(str):
+        return yaml.load(str)
+
+    def save(self):
+        '''saves action to file'''
+        if self.id is None:
+            self.id = 0
+            while os.path.isfile(self.get_file(self.id)):
+                self.id += 1
+        act_file = open(self.get_file(self.id), 'w')
+        act_file.write(self.to_string())
+        act_file.close()
+
+    def to_string(self):
+        '''gets the yaml representing this action'''
+        return yaml.dump(self)
+
     def copy(self):
-        copy = ManipulationStep()
-        copy.conditions = self.conditions
-        copy.ignore_conditions = self.ignore_conditions
-        copy.objects = self.objects
-        for step in self.arm_steps:
-            copy.arm_steps.append(step.copy())
-        return copy
+        return ManipulationStep.from_string(self.to_string())
 
 
 def manipulation_step_representer(dumper, data):

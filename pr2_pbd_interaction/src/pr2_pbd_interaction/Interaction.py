@@ -59,7 +59,6 @@ class Interaction:
             Command.STOP_EXECUTION: Response(self.stop_execution, None),
             Command.DELETE_ALL_STEPS: Response(self.delete_all_steps, None),
             Command.DELETE_LAST_STEP: Response(self.delete_last_step, None),
-            Command.DELETE_LAST_POSE: Response(self.delete_last_arm_step, None),
             Command.FREEZE_RIGHT_ARM: Response(self.freeze_arm, 0),
             Command.FREEZE_LEFT_ARM: Response(self.freeze_arm, 1),
             Command.CREATE_NEW_ACTION: Response(self.create_action, None),
@@ -71,10 +70,7 @@ class Interaction:
             Command.RECORD_OBJECT_POSE: Response(
                 self.record_object_pose, None),
             Command.LOOK_DOWN: Response(self.look_down, None),
-            Command.LOOK_FORWARD: Response(self.look_forward, None),
-            Command.START_RECORDING_MOTION: Response(
-                self.start_recording, None),
-            Command.STOP_RECORDING_MOTION: Response(self.stop_recording, None)
+            Command.LOOK_FORWARD: Response(self.look_forward, None)
         }
 
         rospy.loginfo('Interaction initialized.')
@@ -200,25 +196,6 @@ class Interaction:
         else:
             return [RobotSpeech.ERROR_NO_SKILLS, GazeGoal.SHAKE]
 
-    def delete_last_arm_step(self, dummy=None):
-        """Deletes last arm step of the current action"""
-        if (self.session.n_actions() > 0):
-            if (Interaction._is_programming):
-                if self.session.n_steps() > 0:
-                    if self.session.is_in_manipulation():
-                        self.session.delete_last_arm_step()
-                        return [RobotSpeech.LAST_ARM_STEP_DELETED, GazeGoal.NOD]
-                    else:
-                        rospy.logwarn("Cannot delete last arm step when not in manipulation.")
-                        return [RobotSpeech.ERROR_GENERAL, GazeGoal.SHAKE]
-                else:
-                    return [RobotSpeech.SKILL_EMPTY, GazeGoal.SHAKE]
-            else:
-                return ['Action ' + str(self.session.current_action_index) +
-                        RobotSpeech.ERROR_NOT_IN_EDIT, GazeGoal.SHAKE]
-        else:
-            return [RobotSpeech.ERROR_NO_SKILLS, GazeGoal.SHAKE]
-
     def delete_last_step(self, dummy=None):
         """Deletes last arm step of the current action"""
         if (self.session.n_actions() > 0):
@@ -276,111 +253,11 @@ class Interaction:
                            self.robot.get_gripper_state(1)]
                 actions[arm_index] = gripper_state
                 step.gripperAction = GripperAction(actions[0], actions[1])
-                prev_step = self.session.get_last_arm_step()
+                prev_step = self.session.get_last_step()
                 step.set_gripper_condition(initial_condition if prev_step is None else prev_step.postCond)
                 step.postCond = GripperCondition(self.robot.get_gripper_position(0),
                                                  self.robot.get_gripper_position(1))
                 self.session.add_step_to_action(step)
-
-    def start_recording(self, dummy=None):
-        '''Starts recording continuous motion'''
-        if (self.session.n_actions() > 0):
-            if (Interaction._is_programming):
-                if (not Interaction._is_recording_motion):
-                    Interaction._is_recording_motion = True
-                    Interaction._arm_trajectory = ArmTrajectory()
-                    Interaction._trajectory_start_time = rospy.Time.now()
-                    return [RobotSpeech.STARTED_RECORDING_MOTION,
-                            GazeGoal.NOD]
-                else:
-                    return [RobotSpeech.ALREADY_RECORDING_MOTION,
-                            GazeGoal.SHAKE]
-            else:
-                action_name = self.session.get_action_name(self.session.current_action_index)
-                if action_name is None:
-                    action_name = str(self.session.current_action_index)
-                return ['Action ' + action_name +
-                        RobotSpeech.ERROR_NOT_IN_EDIT, GazeGoal.SHAKE]
-        else:
-            return [RobotSpeech.ERROR_NO_SKILLS, GazeGoal.SHAKE]
-
-    def stop_recording(self, dummy=None):
-        '''Stops recording continuous motion'''
-        if (Interaction._is_recording_motion):
-            Interaction._is_recording_motion = False
-            traj_step = ArmStep()
-            traj_step.type = ArmStep.ARM_TRAJECTORY
-
-            waited_time = Interaction._arm_trajectory.timing[0]
-            for i in range(len(Interaction._arm_trajectory.timing)):
-                Interaction._arm_trajectory.timing[i] -= waited_time
-                Interaction._arm_trajectory.timing[i] += rospy.Duration(0.1)
-
-            self._fix_trajectory_ref()
-            traj_step.armTrajectory = ArmTrajectory(
-                Interaction._arm_trajectory.rArm[:],
-                Interaction._arm_trajectory.lArm[:],
-                Interaction._arm_trajectory.timing[:],
-                Interaction._arm_trajectory.r_ref,
-                Interaction._arm_trajectory.l_ref,
-                Interaction._arm_trajectory.r_ref_name,
-                Interaction._arm_trajectory.l_ref_name)
-            traj_step.gripperAction = GripperAction(
-                self.robot.get_gripper_state(0),
-                self.robot.get_gripper_state(1))
-            self.session.add_step_to_action(traj_step)
-            Interaction._arm_trajectory = None
-            Interaction._trajectory_start_time = None
-            return [RobotSpeech.STOPPED_RECORDING_MOTION + ' ' +
-                    RobotSpeech.STEP_RECORDED, GazeGoal.NOD]
-        else:
-            return [RobotSpeech.MOTION_NOT_RECORDING, GazeGoal.SHAKE]
-
-    def _fix_trajectory_ref(self):
-        '''Makes the reference frame of continuous trajectories uniform'''
-        r_ref, r_ref_name = self._find_dominant_ref(
-            Interaction._arm_trajectory.rArm)
-        l_ref, l_ref_name = self._find_dominant_ref(
-            Interaction._arm_trajectory.lArm)
-        for i in range(len(Interaction._arm_trajectory.timing)):
-            Interaction._arm_trajectory.rArm[i] = World.get_world().convert_ref_frame(
-                Interaction._arm_trajectory.rArm[i],
-                r_ref, r_ref_name)
-            Interaction._arm_trajectory.lArm[i] = World.get_world().convert_ref_frame(
-                Interaction._arm_trajectory.lArm[i],
-                l_ref, l_ref_name)
-        Interaction._arm_trajectory.r_ref = r_ref
-        Interaction._arm_trajectory.l_ref = l_ref
-        Interaction._arm_trajectory.r_ref_name = r_ref_name
-        Interaction._arm_trajectory.l_ref_name = l_ref_name
-
-    def _find_dominant_ref(self, arm_traj):
-        '''Finds the most dominant reference frame
-        in a continuous trajectory'''
-        ref_names = self.world.get_frame_list()
-        ref_counts = dict()
-        for i in range(len(ref_names)):
-            ref_counts[ref_names[i]] = 0
-        for i in range(len(arm_traj)):
-            if (arm_traj[i].refFrameName in ref_counts.keys()):
-                ref_counts[arm_traj[i].refFrameName] += 1
-            else:
-                rospy.logwarn('Ignoring object with reference frame name '
-                              + arm_traj[i].refFrameName
-                              + ' because the world does not have this object.')
-        dominant_ref = ref_counts.values().index(
-            max(ref_counts.values()))
-        dominant_ref_name = ref_counts.keys()[dominant_ref]
-        return World.get_world().get_ref_from_name(dominant_ref_name), dominant_ref_name
-
-    def _save_arm_to_trajectory(self):
-        '''Saves current arm state into continuous trajectory'''
-        if (Interaction._arm_trajectory != None):
-            states = self._get_arm_states()
-            Interaction._arm_trajectory.rArm.append(states[0])
-            Interaction._arm_trajectory.lArm.append(states[1])
-            Interaction._arm_trajectory.timing.append(
-                rospy.Time.now() - Interaction._trajectory_start_time)
 
     def save_arm_step(self, dummy=None):
         """Saves current arm state as an action step"""
@@ -394,7 +271,7 @@ class Interaction:
                 step.gripperAction = GripperAction(
                     self.robot.get_gripper_state(0),
                     self.robot.get_gripper_state(1))
-                prev_step = self.session.get_last_arm_step()
+                prev_step = self.session.get_last_step()
                 if prev_step is None:
                     step.set_gripper_condition(GripperCondition(self.robot.get_gripper_position(0),
                                                                 self.robot.get_gripper_position(1)))
@@ -501,7 +378,6 @@ class Interaction:
         else:
             switch_command = Command.SWITCH_TO_ACTION + " "
             name_command = Command.CHANGE_ACTION_NAME + " "
-            add_action_command = Command.ADD_ACTION_STEP + " "
             if (switch_command in command.command):
                 action_name = command.command[
                               len(switch_command):len(command.command)]
@@ -530,18 +406,6 @@ class Interaction:
                     rospy.logwarn("New action name has zero length")
                     Response(Interaction.empty_response,
                              [RobotSpeech.ERROR_GENERAL, GazeGoal.SHAKE]).respond()
-            elif (add_action_command in command.command):
-                action_name = command.command[
-                              len(add_action_command):len(command.command)]
-                if (self.session.add_action_step_action(action_name)):
-                    Response(Interaction.empty_response,
-                             [RobotSpeech.ACTION_STEP_ADDED + action_name,
-                              GazeGoal.NOD]).respond()
-                    rospy.loginfo('Added an action step to current action: ' + action_name)
-                else:
-                    Response(Interaction.empty_response,
-                             [RobotSpeech.ERROR_GENERAL, GazeGoal.SHAKE]).respond()
-
             else:
                 rospy.logwarn('\033[32m This command (' + command.command
                               + ') is unknown. \033[0m')
@@ -564,23 +428,19 @@ class Interaction:
                     response.respond()
                 elif (command.command == GuiCommand.SELECT_ACTION_STEP):
                     step_no = command.param
-                    self.session.select_action_step(step_no)
+                    self.session.select_step(step_no)
                     rospy.loginfo('Selected action step ' + str(step_no))
                 elif (command.command == GuiCommand.DELETE_STEP):
                     step_no = command.param
-                    self.session.delete_action_step(step_no)
+                    self.session.delete_step(step_no)
                     rospy.loginfo('Deleted action step ' + str(step_no))
-                elif (command.command == GuiCommand.DELETE_ARM_STEP):
+                elif (command.command == GuiCommand.SELECT_STEP):
                     step_no = command.param
-                    self.session.delete_arm_step(step_no)
-                    rospy.loginfo('Deleted arm step ' + str(step_no))
-                elif (command.command == GuiCommand.SELECT_ARM_STEP):
-                    step_no = command.param
-                    self.session.select_arm_step(step_no)
+                    self.session.select_step(step_no)
                     rospy.loginfo('Selected arm step ' + str(step_no))
-                elif (command.command == GuiCommand.DESELECT_ARM_STEP):
+                elif (command.command == GuiCommand.DESELECT_STEP):
                     step_no = command.param
-                    self.session.deselect_arm_step(step_no)
+                    self.session.deselect_step(step_no)
                     rospy.loginfo('Deselected arm step ' + str(step_no))
                 elif (command.command == GuiCommand.SET_IGNORE_CONDITIONS):
                     step_no = command.param
@@ -590,25 +450,11 @@ class Interaction:
                     step_no = command.param
                     self.session.set_ignore_conditions(step_no, False)
                     rospy.loginfo('Will not ignore conditions for step ' + str(step_no))
-                elif (command.command == GuiCommand.SET_IGNORE_ARM_STEP_CONDITIONS):
-                    step_no = command.param
-                    self.session.set_ignore_arm_step_conditions(step_no, True)
-                    rospy.loginfo('Will ignore conditions for arm step ' + str(step_no))
-                elif (command.command == GuiCommand.SET_NO_IGNORE_ARM_STEP_CONDITIONS):
-                    step_no = command.param
-                    self.session.set_ignore_arm_step_conditions(step_no, False)
-                    rospy.loginfo('Will not ignore conditions for arm step ' + str(step_no))
                 elif (command.command == GuiCommand.SET_STRATEGY):
                     condition_index = command.param
                     strategy_index = command.param_list[0]
                     self.session.set_current_step_condition_strategy(condition_index, strategy_index)
                     rospy.loginfo('Changed condition failure strategy for the current step')
-                elif (command.command == GuiCommand.SET_ARM_STEP_STRATEGY):
-                    arm_step_no = command.param
-                    condition_index = int(command.param_float)
-                    strategy_index = command.param_list[0]
-                    self.session.set_arm_step_condition_strategy(arm_step_no, condition_index, strategy_index)
-                    rospy.loginfo('Changed condition failure strategy for arm step ' + str(arm_step_no))
                 elif (command.command == GuiCommand.SET_OBJECT_SIMILARITY_THRESHOLD):
                     step_no = command.param
                     threshold = command.param_float
@@ -648,16 +494,10 @@ class Interaction:
                 self.robot.start_move_arm_to_pose(l_target, 1)
                 self.session.reset_arm_targets(1)
 
-            b_target = self.session.get_requested_base_target()
-            if b_target is not None:
-                self.robot.start_move_base_to_pose(b_target)
-                self.session.reset_base_target()
-
             self.session.delete_requested_steps()
 
             arm_states = self._get_arm_states()
-            base_state = self.robot.get_base_state()
-            self.session.change_requested_steps(arm_states[0], arm_states[1], base_state)
+            self.session.change_requested_steps(arm_states[0], arm_states[1])
 
             if (is_world_changed):
                 rospy.loginfo('The world has changed.')
