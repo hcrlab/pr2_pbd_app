@@ -54,8 +54,6 @@ window.addEventListener("load", function() {
 	});
 
 	var actsListCont = document.querySelector("#actsList");
-	var addButSpan = document.querySelector("#addButs");
-	var delButSpan = document.querySelector("#delButs");
 	var stepsSpan = document.querySelector("#curAct");
 
 	var roboState = {
@@ -122,108 +120,37 @@ window.addEventListener("load", function() {
 		newNameInp.value = state.action_names[state.selected_action];
 
 		//current action:
-		addButSpan.innerHTML = "";
-		delButSpan.innerHTML = "";
 		stepsSpan.innerHTML = "";
 
 		var action = jsyaml.load(state.action_str);
 		//html for one step
 		var dispStep = function(step_act, i) {
-
-			var outerCont = document.createElement("div");
-
-//			var sel = document.createElement("select");
-//			sel.innerHTML = "<option value='Action'>Action</option>" +
-//				"<option value='ManipulationStep'>ManipulationStep</option>";
-//			outerCont.appendChild(sel);
-
-			//html for stuff besides +/-, and type buttons
-			var genHtml = function(step_act) {
-			    var actType = step_act.step_type
-				var stepCont = document.createElement("span");
-
-                var typeLabel = document.createElement("span");
-                typeLabel.innerHTML = actType;
-                stepCont.appendChild(typeLabel);
-
-                var delBut = document.createElement("button");
-                delBut.innerHTML = "Delete step";
-                delButSpan.appendChild(delBut);
-                delBut.addEventListener("click", function() {
-                    guiPub.publish(new ROSLIB.Message({
-                        command: "delete-step",
-                        param: i
-                    }));
-                });
-                stepCont.appendChild(delBut);
-
-				switch (actType) {
-					case "Action"://action
-						sel.selectedIndex = 0;
-						var actsSelect = document.createElement("select");
-						actsSelect.innerHTML = state.action_names.reduce(function(c, nm) {
-							return c + "<option value='" + nm + "'>" + nm + "</option>";
-						}, "");
-						actsSelect.selectedIndex = state.action_ids.indexOf(parseInt(step_act.id));
-						stepCont.appendChild(actsSelect);
-
-						var saveBut = document.createElement("button");
-						saveBut.innerHTML = "save";
-						stepCont.appendChild(saveBut);
-						saveBut.addEventListener("click", function() {
-							guiPub.publish(new ROSLIB.Message({
-								command: "select-action-step",
-								param: (i + 1)
-							}));
-							speechPub.publish(new ROSLIB.Message({
-								command: "delete-last-step"
-							}));
-							speechPub.publish(new ROSLIB.Message({
-								command: "add-action-step " + actsSelect.value
-							}));
-						});
-						break;
-					case "ManipulationStep"://manipulation
-					    var stepTable = document.createElement("table")
-					    step_act.arm_steps.forEach(function(step, arm_step_index) {
-					            var stepRow = document.createElement("tr")
-                                var stepIndexNode = document.createTextNode(arm_step_index);
-                                stepRow.appendChild(stepIndexNode);
-					            var selectButton = document.createElement("button");
-                                selectButton.innerHTML = "Select";
-                                stepRow.appendChild(selectButton);
-                                selectButton.addEventListener("click", function() {
-                                    guiPub.publish(new ROSLIB.Message({
-                                        command: "select-arm-step",
-                                        param: arm_step_index
-                                    }));
-				                 });
-                                stepTable.appendChild(stepRow);
-				        });
-                        stepCont.appendChild(stepTable);
-						break;
-					case 2://gripper
-						
-						break;
-					default:
-					    break;
-				}
-
-				return stepCont;
-			};
-
-//			sel.addEventListener("change", function () {
-//				outerCont.querySelector("span").remove();
-//				outerCont.appendChild(genHtml(sel.value));
-//			})
-
-			outerCont.appendChild(genHtml(step_act));
-
-			return outerCont;
+            var stepRow = document.createElement("tr");
+            var stepIndexNode = document.createTextNode(i+1);
+            stepRow.appendChild(stepIndexNode);
+            var selectButton = document.createElement("button");
+            selectButton.innerHTML = "Select";
+            selectButton.addEventListener("click", function() {
+                guiPub.publish(new ROSLIB.Message({
+                    command: "select-step",
+                    param: i
+                }));
+             });
+             stepRow.appendChild(selectButton)
+            var delBut = document.createElement("button");
+            delBut.innerHTML = "Delete";
+            delBut.addEventListener("click", function() {
+                guiPub.publish(new ROSLIB.Message({
+                    command: "delete-step",
+                    param: i
+                }));
+            });
+             stepRow.appendChild(delBut);
+            return stepRow;
 		};
 
 		//go though action steps and add them all to the gui
-		action.steps.forEach(function(step_act, i) {
+		action.arm_steps.forEach(function(step_act, i) {
 			stepsSpan.appendChild(dispStep(step_act, i));
 		});
 	};

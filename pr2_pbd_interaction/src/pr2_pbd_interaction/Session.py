@@ -113,7 +113,7 @@ class Session:
             self.manipulation_actions[self.current_action_index].reset_viz()
         self.selected_step = -1
         self._selected_arm_step = -1
-        newAct = ManipulationStep(name="Unnamed " + str(len(self.actions)))
+        newAct = ManipulationStep(name="Unnamed " + str(len(self.manipulation_actions)))
         newAct.save()
         self.manipulation_actions.append(newAct)
         self.current_action_index = len(self.manipulation_actions) - 1

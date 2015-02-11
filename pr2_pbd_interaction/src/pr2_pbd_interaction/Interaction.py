@@ -426,10 +426,6 @@ class Interaction:
                                         [RobotSpeech.SWITCH_SKILL + action_name,
                                          GazeGoal.NOD])
                     response.respond()
-                elif (command.command == GuiCommand.SELECT_ACTION_STEP):
-                    step_no = command.param
-                    self.session.select_step(step_no)
-                    rospy.loginfo('Selected action step ' + str(step_no))
                 elif (command.command == GuiCommand.DELETE_STEP):
                     step_no = command.param
                     self.session.delete_step(step_no)
@@ -478,8 +474,6 @@ class Interaction:
         if (self.robot.status != ExecutionStatus.NOT_EXECUTING):
             if (self.robot.status != ExecutionStatus.EXECUTING):
                 self._end_execution()
-        if (Interaction._is_recording_motion):
-            self._save_arm_to_trajectory()
 
         is_world_changed = self.world.update()
         if (self.session.n_actions() > 0):

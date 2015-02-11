@@ -418,6 +418,8 @@ def manipulation_step_representer(dumper, data):
                                                            'arm_steps': data.arm_steps,
                                                            'head_position': data.head_position,
                                                            'objects': data.objects,
-                                                           'step_type': data.step_type})
+                                                           'step_type': data.step_type,
+                                                           'name': data.name,
+                                                           'id': data.id})
 
 yaml.add_representer(ManipulationStep, manipulation_step_representer)
