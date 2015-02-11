@@ -60,10 +60,6 @@ class ArmStep(Step):
                         return
                     elif strategy == Strategy.CONTINUE:
                         rospy.loginfo("Strategy is to continue, ignoring condition failure.")
-                    elif strategy == Strategy.GO_TO_PREVIOUS_STEP:
-                        rospy.loginfo("Strategy is to go to previous step.")
-                        action_data.go_back = True
-                        return
                     else:
                         rospy.logwarn("Unknown strategy " + str(self.strategy))
         else:

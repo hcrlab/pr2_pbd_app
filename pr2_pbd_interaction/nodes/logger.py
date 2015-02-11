@@ -25,9 +25,9 @@ class Logger:
         rospy.loginfo('Logger: Waiting for the logging directory to be set.')
         
         ## Wait for the directory to be specified        
-        while not rospy.has_param('data_directory'):
+        while not rospy.has_param('/pr2_pbd_interaction/actionsRoot'):
             time.sleep(0.01)
-        self.logDirectory = rospy.get_param('data_directory')
+        self.logDirectory = rospy.get_param('/pr2_pbd_interaction/dataRoot')
         
         rospy.loginfo('Logger: got logging directory:'+self.logDirectory)
         self.initializeBags()

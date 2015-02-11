@@ -28,6 +28,8 @@ def manipulation_step_constructor(loader, node):
     m_step.conditions = fields['conditions']
     m_step.arm_steps = fields['arm_steps']
     m_step.objects = fields.get('objects', [])
+    m_step.name = fields['name']
+    m_step.id = fields['id']
     # if the robot hasn't been initialized yet, that means we're on client side, so we don't need anything
     # except arm steps and basic step members
     if len(Robot.arms) == 2:  # if the robot is initialized, construct ArmStepMarkerSequence
@@ -44,15 +46,14 @@ yaml.add_constructor(u'!ManipulationStep', manipulation_step_constructor)
 class ManipulationStep(Step):
     """ Sequence of ArmSteps.
     """
-    ACTION_DIRECTORY = "/home/sonyaa/pbd_manipulation_saved/"
-    FILE_EXTENSION = ".yaml"
+    action_directory = rospy.get_param('/pr2_pbd_interaction/actionsRoot', '/home/sonyaa/pbd_manipulation_saved/')
+    file_extension = rospy.get_param('/pr2_pbd_interaction/fileExtension', '.yaml')
 
     def __init__(self, *args, **kwargs):
         from pr2_pbd_interaction.Session import Session
         from pr2_pbd_interaction.Robot import Robot
 
         Step.__init__(self, *args, **kwargs)
-        self.step_type = "ManipulationStep"
         self.arm_steps = []
         self.selected_step_id = -1
         self.name = kwargs.get('name')
@@ -69,36 +70,11 @@ class ManipulationStep(Step):
                                                      self.step_click_cb, self.reference_change_cb)
         self.objects = []
 
-    def execute(self, action_data):
+    def execute(self, action_data=None):
         from pr2_pbd_interaction.Robot import Robot
 
         robot = Robot.get_robot()
         robot.move_head_to_point(self.head_position)
-        if not self.ignore_conditions:
-            for condition in self.conditions:
-                if isinstance(condition, IKCondition):
-                    condition.set_steps(self.arm_steps)
-                if not condition.check():
-                    rospy.logwarn("Condition failed when executing manipulation step.")
-                    strategy = condition.available_strategies[condition.current_strategy_index]
-                    if strategy == Strategy.FAIL_FAST:
-                        rospy.loginfo("Strategy is to fail-fast, stopping.")
-                        robot.status = ExecutionStatus.CONDITION_FAILED
-                        raise ConditionError()
-                    elif strategy == Strategy.SKIP_STEP:
-                        rospy.loginfo("Strategy is to skip step, skipping.")
-                        self.execution_status = StepExecutionStatus.SKIPPED
-                        return
-                    elif strategy == Strategy.CONTINUE:
-                        rospy.loginfo("Strategy is to continue, ignoring condition failure.")
-                    elif strategy == Strategy.GO_TO_PREVIOUS_STEP:
-                        rospy.loginfo("Strategy is to go to previous step.")
-                        action_data.go_back = True
-                        return
-                    else:
-                        rospy.logwarn("Unknown strategy " + str(self.strategy))
-        else:
-            rospy.loginfo('Ignoring conditions for manipulation step')
         self.update_objects()
         self.initialize_viz()
         step_to_execute = self.copy()
@@ -282,7 +258,6 @@ class ManipulationStep(Step):
         self.lock.acquire()
         self.marker_sequence.delete_step(step_id)
         self.arm_steps.pop(step_id)
-        rospy.loginfo('Deleting arm step ' + str(step_id))
         # Deleting two objects that correspond to rArm and lArm for specified step.
         for condition in self.conditions:
             if isinstance(condition, SpecificObjectCondition):
@@ -366,15 +341,15 @@ class ManipulationStep(Step):
 
     @staticmethod
     def get_file(action):
-        return ManipulationStep.ACTION_DIRECTORY + str(action) + ManipulationStep.FILE_EXTENSION
+        return ManipulationStep.action_directory + str(action) + ManipulationStep.file_extension
 
     @staticmethod
     def get_saved_actions():
         actions = map(ManipulationStep.load,
-                      filter(lambda f: f.endswith(ManipulationStep.FILE_EXTENSION),
+                      filter(lambda f: f.endswith(ManipulationStep.file_extension),
                              filter(isfile,
-                                    map(partial(join, ManipulationStep.ACTION_DIRECTORY),
-                                        listdir(ManipulationStep.ACTION_DIRECTORY)))))
+                                    map(partial(join, ManipulationStep.action_directory),
+                                        listdir(ManipulationStep.action_directory)))))
         actions.sort(key=lambda action: action.id)
         return actions
 
@@ -418,7 +393,6 @@ def manipulation_step_representer(dumper, data):
                                                            'arm_steps': data.arm_steps,
                                                            'head_position': data.head_position,
                                                            'objects': data.objects,
-                                                           'step_type': data.step_type,
                                                            'name': data.name,
                                                            'id': data.id})
 

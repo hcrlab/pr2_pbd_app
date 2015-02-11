@@ -17,15 +17,13 @@ class Session:
 
     def __init__(self, object_list):
         Session.session = self
-        self._is_reload = rospy.get_param('/pr2_pbd_interaction/isReload')
 
-        self._exp_number = None
         self.selected_step = -1
         self._selected_arm_step = -1
 
-        #TODO: read data_dir name from parameters?
-        if not os.path.exists(ManipulationStep.ACTION_DIRECTORY):
-            os.makedirs(ManipulationStep.ACTION_DIRECTORY)
+        action_directory = rospy.get_param('/pr2_pbd_interaction/actionsRoot', '/home/sonyaa/pbd_manipulation_saved/')
+        if not os.path.exists(action_directory):
+            os.makedirs(action_directory)
         self.manipulation_actions = ManipulationStep.get_saved_actions()
         self.current_action_index = 0 if len(self.manipulation_actions) > 0 else None
         if self.current_action_index is not None:
