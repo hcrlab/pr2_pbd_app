@@ -111,6 +111,7 @@ class Robot:
                 self.status = ExecutionStatus.OTHER_ERROR
             else:
                 self.status = ExecutionStatus.SUCCEEDED
+            rospy.loginfo('Execution finished')
 
     def continue_execution(self):
         self.is_continue_execution = True
