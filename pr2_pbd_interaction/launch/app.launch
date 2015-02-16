@@ -17,6 +17,6 @@
 
   <!-- This is the stuff required for web-based GUI -->
   <include file="$(find pr2_interactive_controller)/launch/web_launch.launch"/>
-  <node pkg="interactive_marker_proxy" type="proxy" name="proxy_world_objects" output="screen" args="topic_ns:=/world_objects target_frame:=/odom_combined" />
-  <node pkg="interactive_marker_proxy" type="proxy" name="proxy_saved_poses" output="screen" args="topic_ns:=/programmed_actions target_frame:=/odom_combined" />
+  <node pkg="interactive_marker_proxy" type="proxy" name="proxy_world_objects" output="screen" args="topic_ns:=/world_objects target_frame:=/base_link" />
+  <node pkg="interactive_marker_proxy" type="proxy" name="proxy_saved_poses" output="screen" args="topic_ns:=/programmed_actions target_frame:=/base_link" />
 </launch>
