@@ -34,13 +34,13 @@ window.addEventListener("load", function() {
 	  return decodeURI(window.location.search.replace(new RegExp("^(?:.*[&\\?]" + encodeURI(sVar).replace(/[\.\+\*]/g, "\\$&") + "(?:\\=([^&]*))?)?.*$", "i"), "$1"));
 	};
 
-//	if (loadPageVar("visual").toLowerCase() == "true") {
-//		var iFrame = document.createElement("iframe");
-//		iFrame.src = "visual.html";
-//		iFrame.style.width = "100%";
-//		iFrame.style.height = "600px";
-//		document.querySelector("#visualSection").appendChild(iFrame);
-//	}
+	if (loadPageVar("visual").toLowerCase() == "true") {
+		var iFrame = document.createElement("iframe");
+		iFrame.src = "visual.html";
+		iFrame.style.width = "100%";
+		iFrame.style.height = "600px";
+		document.querySelector("#visualSection").appendChild(iFrame);
+	}
 
 
 	//hook up buttons with com attribute to speech commands

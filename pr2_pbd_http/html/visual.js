@@ -23,7 +23,25 @@ window.addEventListener("load", function() {
 	  rate : 10.0
 	});
 
-    // Setup the marker client.
+    // Setup the marker client for world objects.
+    var objectsClient = new ROS3D.InteractiveMarkerClient({
+        ros : ros,
+        tfClient : tfClient,
+        topic : '/world_objects',
+        camera : viewer.camera,
+        rootObject : viewer.selectableObjects
+    });
+
+    // Setup the marker client for saved poses.
+    var poseClient = new ROS3D.InteractiveMarkerClient({
+        ros : ros,
+        tfClient : tfClient,
+        topic : '/programmed_actions',
+        camera : viewer.camera,
+        rootObject : viewer.selectableObjects
+    });
+
+    // Setup the marker client for robot interaction.
     var imClient = new ROS3D.InteractiveMarkerClient({
       ros : ros,
       tfClient : tfClient,
@@ -69,16 +87,5 @@ window.addEventListener("load", function() {
 		comPub.publish(new ROSLIB.Message({
 			command: 0
 		}));
-	});
-
-
-
-
-	// Setup the marker client.
-	var markerClient = new ROS3D.MarkerClient({
-	  ros : ros,
-	  tfClient : tfClient,
-	  topic : '/visualization_marker',
-	  rootObject : viewer.scene
 	});
 });
