@@ -29,6 +29,10 @@ var expListenerSrvCli = new ROSLIB.Service({
 
 window.lockUpdate = false;
 
+var get_arm_step_id = function (step_number, arm_index) {
+            return (2 * step_number + arm_index)
+        }
+
 window.addEventListener("load", function() {
 	var loadPageVar = function (sVar) {
 	  return decodeURI(window.location.search.replace(new RegExp("^(?:.*[&\\?]" + encodeURI(sVar).replace(/[\.\+\*]/g, "\\$&") + "(?:\\=([^&]*))?)?.*$", "i"), "$1"));
@@ -126,17 +130,34 @@ window.addEventListener("load", function() {
 		//html for one step
 		var dispStep = function(step_act, i) {
             var stepRow = document.createElement("tr");
+            var stepIndexCol = document.createElement("td")
+            stepRow.appendChild(stepIndexCol);
             var stepIndexNode = document.createTextNode(i+1);
-            stepRow.appendChild(stepIndexNode);
-            var selectButton = document.createElement("button");
-            selectButton.innerHTML = "Select";
-            selectButton.addEventListener("click", function() {
+            stepIndexCol.appendChild(stepIndexNode);
+            var rightCol = document.createElement("td")
+            stepRow.appendChild(rightCol);
+            var leftCol = document.createElement("td")
+            stepRow.appendChild(leftCol);
+            var selectRightBut = document.createElement("button");
+            selectRightBut.innerHTML = "Select right";
+            selectRightBut.addEventListener("click", function() {
                 guiPub.publish(new ROSLIB.Message({
                     command: "select-step",
-                    param: i
+                    param: get_arm_step_id(i, 0)
                 }));
              });
-             stepRow.appendChild(selectButton)
+            rightCol.appendChild(selectRightBut)
+            var selectLeftBut = document.createElement("button");
+            selectLeftBut.innerHTML = "Select left";
+            selectLeftBut.addEventListener("click", function() {
+                guiPub.publish(new ROSLIB.Message({
+                    command: "select-step",
+                    param: get_arm_step_id(i, 1)
+                }));
+             });
+            leftCol.appendChild(selectLeftBut)
+            var delCol = document.createElement("td")
+            stepRow.appendChild(delCol);
             var delBut = document.createElement("button");
             delBut.innerHTML = "Delete";
             delBut.addEventListener("click", function() {
@@ -145,7 +166,7 @@ window.addEventListener("load", function() {
                     param: i
                 }));
             });
-             stepRow.appendChild(delBut);
+            delCol.appendChild(delBut);
             return stepRow;
 		};
 
