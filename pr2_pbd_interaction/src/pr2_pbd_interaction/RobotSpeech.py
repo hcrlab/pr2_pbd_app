@@ -85,7 +85,7 @@ class RobotSpeech:
             #self.speech_publisher.publish(SoundRequest(
             #                            sound=SoundRequest.SAY, command=SoundRequest.PLAY_ONCE, arg=text))
             self.soundhandle.say(text)
-        self.say_in_rviz(text)
+        # self.say_in_rviz(text)
 
     def say_in_rviz(self, text):
         ''' Visualizes the text that is uttered by the robot in rviz'''
