@@ -370,12 +370,13 @@ class ArmStepMarker:
         angle_rad = (float(orbital) / n_orbitals) * (-2 * numpy.pi) + \
             (numpy.pi / 2.0) # start above, at pi/2 (90 degrees)
         text_pos = Point()
-        text_pos.x = pose.position.x
-        text_pos.y = pose.position.y + numpy.cos(angle_rad) * offset
-        text_pos.z = pose.position.z + numpy.sin(angle_rad) * offset
+        text_pos.x = 0
+        text_pos.y = numpy.cos(angle_rad) * offset
+        text_pos.z = numpy.sin(angle_rad) * offset
         r,g,b = self.get_marker_color()
         menu_control.markers.append(Marker(type=Marker.TEXT_VIEW_FACING,
-                        id=self.get_uid(), scale=Vector3(0, 0, 0.05),
+                        id=self.get_uid(), scale=Vector3(0.06, 0.06, 0.06),
+                        lifetime=rospy.Duration(1.5),
                         text='Step ' + str(self.step_number),
                         color=ColorRGBA(r, g, b, 1.0),
                         header=Header(frame_id=frame_id),
