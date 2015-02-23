@@ -68,13 +68,13 @@ class Arm:
                       + self._side() + ' arm.')
 
         # # Create a trajectory action client
-        # traj_controller_name = (self._side_prefix()
-        #             + '_arm_controller/joint_trajectory_action')
-        # self.traj_action_client = SimpleActionClient(
-        #                 traj_controller_name, JointTrajectoryAction)
-        # self.traj_action_client.wait_for_server()
-        # rospy.loginfo('Got response form trajectory action server for '
-        #               + self._side() + ' arm.')
+        traj_controller_name = (self._side_prefix()
+                    + '_arm_controller/joint_trajectory_action')
+        self.traj_action_client = SimpleActionClient(
+                        traj_controller_name, JointTrajectoryAction)
+        self.traj_action_client.wait_for_server()
+        rospy.loginfo('Got response form trajectory action server for '
+                      + self._side() + ' arm.')
 
         # Set up Inversse Kinematics
         self.ik_srv = None
@@ -331,26 +331,37 @@ class Arm:
 
     def move_to_joints(self, joints, time_to_joint):
         '''Moves the arm to the desired joints'''
-        updated_joints = []
-        for (joint_name, joint) in zip(self.joint_names, joints):
-            rollover = 0
-            if 'wrist_roll_joint' in joint_name or 'forearm_roll_joint' in joint_name:
-                rollover = int(round((joint / 2) / pi))
-            updated_joints.append(joint - rollover * 2 * pi)
-        self.arm_commander.set_joint_value_target(dict(zip(self.joint_names, updated_joints)))
-        self.arm_commander.plan()
-        self.arm_commander.go(wait=False)
+        # Setup the goal
+        traj_goal = JointTrajectoryGoal()
+        traj_goal.trajectory.header.stamp = (rospy.Time.now() +
+                                             rospy.Duration(0.1))
+        traj_goal.trajectory.joint_names = self.joint_names
+        velocities = [0] * len(joints)
+        traj_goal.trajectory.points.append(JointTrajectoryPoint(
+                        positions=joints,
+                        velocities=velocities,
+                        time_from_start=rospy.Duration(time_to_joint)))
+
+        # # Client sends the goal to the Server
+        self.traj_action_client.send_goal(traj_goal)
+        # updated_joints = []
+        # for (joint_name, joint) in zip(self.joint_names, joints):
+        #     rollover = 0
+        #     if 'wrist_roll_joint' in joint_name or 'forearm_roll_joint' in joint_name:
+        #         rollover = int(round((joint / 2) / pi))
+        #     updated_joints.append(joint - rollover * 2 * pi)
+        # self.arm_commander.set_joint_value_target(dict(zip(self.joint_names, updated_joints)))
+        # self.arm_commander.plan()
+        # self.arm_commander.go(wait=False)
 
     #TODO
     def is_executing(self):
-        return False
         '''Whether or not there is an ongoing action execution on the arm'''
         return (self.traj_action_client.get_state() == GoalStatus.ACTIVE
                 or self.traj_action_client.get_state() == GoalStatus.PENDING)
 
     #TODO
     def is_successful(self):
-        return True
         '''Whetehr the execution succeeded'''
         return (self.traj_action_client.get_state() == GoalStatus.SUCCEEDED)
 
