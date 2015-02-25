@@ -484,18 +484,17 @@ class World:
                                scale=World.objects[index].object.dimensions,
                                header=Header(frame_id='base_link'),
                                color=color,
-                               pose=World.objects[index].object.pose)
+                               pose=Pose(Point(0, 0, 0), Quaternion(0, 0, 0, 1)))
         if (mesh != None):
             object_marker = World._get_mesh_marker(object_marker, mesh)
         button_control.markers.append(object_marker)
 
         text_pos = Point()
-        text_pos.x = World.objects[index].object.pose.position.x
-        text_pos.y = World.objects[index].object.pose.position.y
-        text_pos.z = (World.objects[index].object.pose.position.z +
-                      World.objects[index].object.dimensions.z / 2 + 0.06)
+        text_pos.x = 0
+        text_pos.y = 0
+        text_pos.z = World.objects[index].object.dimensions.z / 2 + 0.06
         button_control.markers.append(Marker(type=Marker.TEXT_VIEW_FACING,
-                                             id=index, scale=Vector3(0, 0, 0.03),
+                                             id=index, scale=Vector3(0.05, 0.05, 0.05),
                                              text=int_marker.name, color=ColorRGBA(0.0, 0.0, 0.0, 0.5),
                                              header=Header(frame_id='base_link'),
                                              pose=Pose(text_pos, Quaternion(0, 0, 0, 1))))
@@ -518,16 +517,15 @@ class World:
                                scale=dimensions,
                                header=Header(frame_id='base_link'),
                                color=ColorRGBA(0.8, 0.0, 0.4, 0.4),
-                               pose=pose)
+                               pose=Pose(Point(0, 0, 0), Quaternion(0, 0, 0, 1)))
         button_control.markers.append(object_marker)
         text_pos = Point()
-        position = pose.position
         dimensions = dimensions
-        text_pos.x = position.x + dimensions.x / 2 - 0.06
-        text_pos.y = position.y - dimensions.y / 2 + 0.06
-        text_pos.z = position.z + dimensions.z / 2 + 0.06
+        text_pos.x = dimensions.x / 2 - 0.06
+        text_pos.y = - dimensions.y / 2 + 0.06
+        text_pos.z = dimensions.z / 2 + 0.06
         text_marker = Marker(type=Marker.TEXT_VIEW_FACING, id=2001,
-                             scale=Vector3(0, 0, 0.03), text=int_marker.name,
+                             scale=Vector3(0.05, 0.05, 0.05), text=int_marker.name,
                              color=ColorRGBA(0.0, 0.0, 0.0, 0.5),
                              header=Header(frame_id='base_link'),
                              pose=Pose(text_pos, Quaternion(0, 0, 0, 1)))
@@ -722,6 +720,7 @@ class World:
                 self._add_new_object(Pose(Point((minX + maxX) / 2, (minY + maxY) / 2,
                                                 (minZ + maxZ) / 2), Quaternion(0, 0, 0, 1)),
                                      Point(maxX - minX, maxY - minY, maxZ - minZ), False)
+            return True
         except rospy.ServiceException, e:
             print "Call to segmentation service failed: %s" % e
             return False
