@@ -75,6 +75,13 @@ class ManipulationStep(Step):
 
         robot = Robot.get_robot()
         robot.move_head_to_point(self.head_position)
+        if len(self.get_unique_objects()) > 0:
+            world = World.get_world()
+            if not world.update_object_pose():
+                rospy.logwarn("Object detection failed.")
+                self.execution_status = StepExecutionStatus.FAILED
+                return
+
         self.update_objects()
         self.initialize_viz()
         step_to_execute = self.copy()
