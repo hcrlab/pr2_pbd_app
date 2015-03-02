@@ -58,6 +58,7 @@ class ManipulationStep(Step):
         self.selected_step_id = -1
         self.name = kwargs.get('name')
         self.id = kwargs.get('id')
+        self.similarity_threshold = 0.075
         if len(Robot.arms) < 2:
             # if the robot hasn't been initialized yet, that means we're on client side, so we don't need anything
             # except arm steps and basic step members
@@ -79,6 +80,14 @@ class ManipulationStep(Step):
             world = World.get_world()
             if not world.update_object_pose():
                 rospy.logwarn("Object detection failed.")
+                self.execution_status = StepExecutionStatus.FAILED
+                return
+            world_objects = world.get_frame_list()
+            map_of_objects_old_to_new = World.get_map_of_most_similar_obj(self.get_unique_objects(),
+                                                                          world_objects, self.similarity_threshold)
+            if map_of_objects_old_to_new is None:
+                # didn't find similar objects
+                rospy.logwarn("Didn't find similar objects, aborting execution.")
                 self.execution_status = StepExecutionStatus.FAILED
                 return
 
@@ -164,21 +173,16 @@ class ManipulationStep(Step):
         has_real_objects = True
         world_objects = World.get_world().get_frame_list()
         rospy.loginfo([x.name for x in world_objects])
-        action_objects = None
-        map_of_objects_old_to_new = None
-        for condition in self.conditions:
-            if isinstance(condition, SpecificObjectCondition):
-                action_objects = condition.get_objects()
-                unique_action_objects = condition.get_unique_objects()
-                map_of_objects_old_to_new = World.get_map_of_most_similar_obj(unique_action_objects, world_objects,
-                                                                              threshold=condition.similarity_threshold)
-                if map_of_objects_old_to_new is None and len(unique_action_objects) > 0:
-                    world_objects = self.get_unique_objects()
-                    rospy.loginfo('fake objects')
-                    rospy.loginfo([x.name for x in world_objects])
-                    map_of_objects_old_to_new = World.get_map_of_most_similar_obj(unique_action_objects, world_objects)
-                    has_real_objects = False
-                break
+        action_objects = self.objects
+        unique_action_objects = self.get_unique_objects()
+        map_of_objects_old_to_new = World.get_map_of_most_similar_obj(unique_action_objects, world_objects,
+                                                                      threshold=self.similarity_threshold)
+        if map_of_objects_old_to_new is None and len(unique_action_objects) > 0:
+            world_objects = self.get_unique_objects()
+            rospy.loginfo('fake objects')
+            rospy.loginfo([x.name for x in world_objects])
+            map_of_objects_old_to_new = World.get_map_of_most_similar_obj(unique_action_objects, world_objects)
+            has_real_objects = False
         self.marker_sequence.update_objects(action_objects, world_objects, map_of_objects_old_to_new, has_real_objects)
         self.lock.release()
 
