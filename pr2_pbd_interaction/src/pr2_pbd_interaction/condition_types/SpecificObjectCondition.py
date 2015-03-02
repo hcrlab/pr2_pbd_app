@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rospy
 
-from pr2_pbd_interaction import World
+from pr2_pbd_interaction.World import World
 from pr2_pbd_interaction.condition_types.Condition import Condition
 from pr2_pbd_interaction.msg import Strategy
 
