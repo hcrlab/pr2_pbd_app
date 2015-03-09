@@ -532,6 +532,7 @@ class Interaction:
                 if self.world.update_object_pose():
                     self.session.selected_step = -1
                     self.session.get_current_action().selected_step_id = -1
+                    self.session.remember_head_position()
                     return [RobotSpeech.START_STATE_RECORDED, GazeGoal.NOD]
                 else:
                     return [RobotSpeech.OBJECT_NOT_DETECTED, GazeGoal.SHAKE]

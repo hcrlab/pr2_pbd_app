@@ -285,4 +285,8 @@ class Session:
         if self.n_actions() > 0:
             self.manipulation_actions[self.current_action_index].change_requested_steps(r_state, l_state)
 
+    def remember_head_position(self):
+        if self.n_actions() > 0:
+            self.manipulation_actions[self.current_action_index].remember_head_position()
+
 

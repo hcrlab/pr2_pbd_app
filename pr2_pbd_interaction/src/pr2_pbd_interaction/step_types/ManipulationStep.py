@@ -343,6 +343,13 @@ class ManipulationStep(Step):
                     self.id += 1
             return 'Manipulation action ' + str(self.id)
 
+    def set_head_position(self, point):
+        self.head_position = point
+
+    def remember_head_position(self):
+        from pr2_pbd_interaction.Robot import Robot
+        self.set_head_position(Robot.get_head_position())
+
     def clear(self):
         self.reset_viz()
         self.lock.acquire()
