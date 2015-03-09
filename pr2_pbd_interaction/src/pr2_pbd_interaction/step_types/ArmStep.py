@@ -17,6 +17,7 @@ class ArmStep(Step):
     ARM_TARGET = 0
     ARM_TRAJECTORY = 1
     def __init__(self, *args, **kwargs):
+        from pr2_pbd_interaction.Robot import Robot
         Step.__init__(self, *args, **kwargs)
         self.step_type = "ArmStep"
         self.conditions = [GripperCondition()]
@@ -25,6 +26,7 @@ class ArmStep(Step):
         self.armTrajectory = None
         self.gripperAction = None
         self.postCond = None
+        self.head_position = Robot.get_head_position()
 
     def set_gripper_condition_poses(self, r_gripper, l_gripper):
         for condition in self.conditions:
@@ -45,6 +47,7 @@ class ArmStep(Step):
         from pr2_pbd_interaction.Robot import Robot
 
         robot = Robot.get_robot()
+        robot.move_head_to_point(self.head_position)
         if not self.ignore_conditions:
             for condition in self.conditions:
                 if not condition.check():
