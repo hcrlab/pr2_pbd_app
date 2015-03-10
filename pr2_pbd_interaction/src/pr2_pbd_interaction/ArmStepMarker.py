@@ -5,6 +5,8 @@ roslib.load_manifest('pr2_pbd_interaction')
 import numpy
 import rospy
 import tf
+from tf.transformations import quaternion_matrix
+from tf.transformations import quaternion_inverse
 from pr2_pbd_interaction.step_types.ArmStep import ArmStep
 from pr2_pbd_interaction.msg import ArmState, Object, GripperState
 from geometry_msgs.msg import Quaternion, Vector3, Point, Pose
@@ -350,13 +352,20 @@ class ArmStepMarker:
 
         ref_frame = World.get_world().get_ref_from_name(frame_id)
         if (ref_frame == ArmState.OBJECT):
+            # The following is needed to properly display the arrtow in browser, due to the fact that ros3djs
+            # displays all nested markers in the reference frame of the interactive marker.
+            # Thus, we need to calculate the position of the object in the reference frame of the interactive marker.
+            quat = [pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]
+            inv_quat_matrix = quaternion_matrix(quaternion_inverse(quat))
+            pose_vec = numpy.array((pose.position.x, pose.position.y, pose.position.z, 0))
+            new_pose = numpy.dot(inv_quat_matrix, pose_vec)
             menu_control.markers.append(Marker(type=Marker.ARROW,
                         id=(1000 + self.get_uid()),
                         lifetime=rospy.Duration(2),
                         scale=Vector3(0.01, 0.01, 0.0001),
                         header=Header(frame_id=frame_id),
-                        color=ColorRGBA(0.2, 0.8, 0.0, 0.6),
-                        points=[pose.position, Point(0, 0, 0)]))
+                        color=ColorRGBA(0.8, 0.8, 0.0, 0.6),
+                        points=[Point(0, 0, 0), Point(-new_pose[0], -new_pose[1], -new_pose[2])]))
 
         # Calculate text position so that they "orbit" around the marker;
         # this is done so that poses in identical or similar positions
