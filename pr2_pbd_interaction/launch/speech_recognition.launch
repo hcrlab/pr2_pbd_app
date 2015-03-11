@@ -1,0 +1,5 @@
+<launch>
+  <!-- This adds speech recognition (pocketsphinx based) -->
+  <include file="$(find pr2_pbd_speech_recognition)/launch/command_recognition.launch"/>
+
+</launch>
