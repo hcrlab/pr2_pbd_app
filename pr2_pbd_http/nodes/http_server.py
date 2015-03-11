@@ -13,7 +13,7 @@ def server():
 
     rospack = rospkg.RosPack()
 
-    os.chdir(os.path.join(rospack.get_path('pr2_pbd_http'), "html"))
+    os.chdir(os.path.join(rospack.get_path('pr2_pbd_interaction'), "www"))
 
     HandlerClass = SimpleHTTPRequestHandler
     ServerClass = BaseHTTPServer.HTTPServer
