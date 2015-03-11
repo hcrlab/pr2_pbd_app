@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="dataRoot" default="$(env HOME)" />
+  <arg name="file_extension" default=".yaml" />
+  <arg name="tabletop_segmentation_service" value="tabletop_segmentation" />
+
+  <include file="$(find pr2_social_gaze)/launch/gaze.launch" />
+
+  <include file="$(find pr2_moveit_config)/launch/move_group.launch" />
+
+  <include file="$(find openni_launch)/launch/openni.launch">
+      <arg name="depth_frame_id" value="/head_mount_kinect_ir_optical_frame" />
+  </include>
+
+  <include file="$(find tabletop_object_detector)/launch/tabletop_segmentation.launch">
+      <arg name="tabletop_segmentation_points_in" value="camera/depth/points" />
+  </include>
+
+  <node name="pr2_pbd_app" pkg="pr2_pbd_app" type="interaction.py" output="screen">
+    <param name="dataRoot" value="$(arg dataRoot)" />
+    <param name="file_extension" value="$(arg file_extension)" />
+    <param name="actionsRoot" value="$(arg dataRoot)/pbd_manipulation_saved/" />
+    <param name="tabletop_segmentation_service" value="$(arg tabletop_segmentation_service)" />
+  </node>
+
+  <!-- This is the stuff required for web-based GUI -->
+  <node pkg="tf2_web_republisher" type="tf2_web_republisher" name="tf2_web_republisher" output="screen" />
+  <node pkg="interactive_marker_proxy" type="proxy" name="proxy_world_objects" output="screen" args="topic_ns:=/world_objects target_frame:=/base_link" />
+  <node pkg="interactive_marker_proxy" type="proxy" name="proxy_saved_poses" output="screen" args="topic_ns:=/programmed_actions target_frame:=/base_link" />
+
+  <!-- This adds robot responses -->
+  <node name="soundplay_node" pkg="sound_play" type="soundplay_node.py"/>
+</launch>
