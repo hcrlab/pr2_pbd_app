@@ -44,15 +44,15 @@
 		}
 
 		#actsList div {
-			background-color: #000;
-			color: #fff;
+			background-color: #ddd;
+			color: #000;
 			border-radius: 5px;
 			min-height: 30px;
 			margin-bottom: 10px;
 			cursor: pointer;
 		}
 		#actsList div.selected {
-			background-color:  #444;
+			background-color:  #555;
 		}
 		#addButs > button, #delButs > button {
 			display: block;
@@ -68,7 +68,7 @@
 			}
 
 			button {
-				height: 100px;
+				height: 50px;
 				margin-bottom: 5px;
 				min-width: 50px;
 			}
@@ -89,11 +89,12 @@
 			</table>
 			<button com="create-new-action">New Action</button>
             <br>
-			<button com="execute-action">Execute!</button>
-			<button com="stop-execution">Stop Execution</button>
+			<button com="record-object-pose">Record object poses</button>
             <br>
 			<button com="save-pose">Save arm pose</button>
-			<button com="record-object-pose">Scan world</button>
+            <br>
+			<button com="execute-action">Execute!</button>
+			<button com="stop-execution">Stop Execution</button>
             <br>
 			<button com="open-right-hand">Open right hand</button>
 			<button com="open-left-hand">Open left hand</button>
