@@ -27,7 +27,4 @@
   <node pkg="tf2_web_republisher" type="tf2_web_republisher" name="tf2_web_republisher" output="screen" />
   <node pkg="interactive_marker_proxy" type="proxy" name="proxy_world_objects" output="screen" args="topic_ns:=/world_objects target_frame:=/base_link" />
   <node pkg="interactive_marker_proxy" type="proxy" name="proxy_saved_poses" output="screen" args="topic_ns:=/programmed_actions target_frame:=/base_link" />
-
-  <!-- This adds robot responses -->
-  <node name="soundplay_node" pkg="sound_play" type="soundplay_node.py"/>
 </launch>
