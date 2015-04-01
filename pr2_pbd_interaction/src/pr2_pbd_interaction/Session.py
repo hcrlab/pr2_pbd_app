@@ -21,7 +21,7 @@ class Session:
         self.selected_step = -1
         self._selected_arm_step = -1
 
-        action_directory = rospy.get_param('/pr2_pbd_interaction/actionsRoot', '/home/sonyaa/pbd_manipulation_saved/')
+        action_directory = rospy.get_param('/pr2_pbd_interaction/actionsRoot')
         if not os.path.exists(action_directory):
             os.makedirs(action_directory)
         self.manipulation_actions = ManipulationStep.get_saved_actions()
