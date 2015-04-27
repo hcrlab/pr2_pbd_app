@@ -1,6 +1,6 @@
 //initialize ros library
 var ros = new ROSLIB.Ros({
-	url : 'ws://' + window.location.hostname + ':9090'
+	url : 'ws://localhost:9090'
   });
 
 var speechPub = new ROSLIB.Topic({
@@ -34,18 +34,80 @@ var get_arm_step_id = function (step_number, arm_index) {
         }
 
 window.addEventListener("load", function() {
-	var loadPageVar = function (sVar) {
-	  return decodeURI(window.location.search.replace(new RegExp("^(?:.*[&\\?]" + encodeURI(sVar).replace(/[\.\+\*]/g, "\\$&") + "(?:\\=([^&]*))?)?.*$", "i"), "$1"));
-	};
 
-	if (loadPageVar("visual").toLowerCase() == "true") {
-		var iFrame = document.createElement("iframe");
-		iFrame.src = "visual.html";
-		iFrame.style.width = "100%";
-		iFrame.style.height = "600px";
-		document.querySelector("#visualSection").appendChild(iFrame);
-	}
+    ros.on("error", function() {
+        alert("Error connecting to the ROS server. App will not work.")
+    });
 
+    ros.on('connection', function() {
+	console.log('Connected to websocket server.');
+    });
+
+    ros.on('close', function() {
+	console.log('Connection to websocket server closed.');
+    });
+
+    // Create the main viewer.
+    var viewer = new ROS3D.Viewer({
+      divID : 'visualWindow',
+      width : 800,
+      height : 600,
+      antialias : true
+    });
+
+    // Add a grid.
+//    viewer.addObject(new ROS3D.Grid());
+
+    // Setup a client to listen to TFs.
+    var tfClient = new ROSLIB.TFClient({
+      ros : ros,
+      angularThres : 0.01,
+      transThres : 0.01,
+      rate : 10.0
+    });
+
+    // Setup the marker client for world objects.
+    var objectsClient = new ROS3D.InteractiveMarkerClient({
+        ros : ros,
+        tfClient : tfClient,
+        topic : '/world_objects',
+        camera : viewer.camera,
+        rootObject : viewer.selectableObjects
+    });
+
+    // Setup the marker client.
+    var markerClient = new ROS3D.MarkerClient({
+      ros : ros,
+      tfClient : tfClient,
+      topic : '/visualization_marker',
+      rootObject : viewer.scene
+    });
+
+    // Setup the marker array client..
+    var markerClient = new ROS3D.MarkerArrayClient({
+      ros : ros,
+      tfClient : tfClient,
+      topic : '/visualization_marker_array',
+      rootObject : viewer.scene
+    });
+
+    // Setup the marker client for saved poses.
+    var poseClient = new ROS3D.InteractiveMarkerClient({
+        ros : ros,
+        tfClient : tfClient,
+        topic : '/programmed_actions',
+        camera : viewer.camera,
+        path : 'http://resources.robotwebtools.org/',
+        rootObject : viewer.selectableObjects
+    });
+
+    // Setup the URDF client.
+    var urdfClient = new ROS3D.UrdfClient({
+      ros : ros,
+      tfClient : tfClient,
+      path : 'http://resources.robotwebtools.org/',
+      rootObject : viewer.scene
+    });
 
 	//hook up buttons with com attribute to speech commands
 	[].slice.call(document.querySelectorAll("button[com]")).forEach(function(el) {

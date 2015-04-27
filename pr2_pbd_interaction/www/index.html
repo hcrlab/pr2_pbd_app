@@ -17,7 +17,7 @@
 		html, body {
 			width: 100%;
 			height: 100%;
-			margin: 0;
+			margin: 10px;
 			padding: 0;
 		}
 
@@ -62,13 +62,26 @@
 			display: inline-block;
 		}
 
+		#controls, #visualWindow {
+           float: left;
+		}
+
+        #curAct {
+            vertical-align: top;
+            min-width: 325px;
+        }
+
+        table tr td:empty {
+            width: 20px;
+        }
+
 		@media (min-width: 800px) {
 			body, button, input, select, option {
-				font-size: 30px;
+				font-size: 20px;
 			}
 
 			button {
-				height: 50px;
+				height: 30px;
 				margin-bottom: 5px;
 				min-width: 50px;
 			}
@@ -78,54 +91,59 @@
 		<meta name="viewport" content="user-scalable=no">
 	</head>
 	<body>
-		<section id="controlsSection">
-			<table>
-				<tr>
-					<td id="actsList">
-					</td>
-					<td id="curAct">
-					</td>
-				</tr>
-			</table>
-			<button com="create-new-action">New Action</button>
-            <br>
-			<button com="record-object-pose">Record object poses</button>
-            <br>
-			<button com="save-pose">Save arm pose</button>
-            <br>
-			<button com="execute-action">Execute!</button>
-			<button com="stop-execution">Stop Execution</button>
-            <br>
-			<button com="open-right-hand">Open right hand</button>
-			<button com="open-left-hand">Open left hand</button>
-            <br>
-			<button com="close-right-hand">Close right hand</button>
-			<button com="close-left-hand">Close left hand</button>
-			<div>
-				<span>
-					<button com="relax-left-arm">Relax left arm</button>
-					<button com="freeze-left-arm">Freeze left arm</button>
-				</span>
-				<span>
-					<button com="relax-right-arm">Relax right arm</button>
-					<button com="freeze-right-arm">Freeze right arm</button>
-				</span>
-			</div>
-			<button com="look-down">Look down</button>
-			<button com="look-forward">Look forward</button>
-            <br>
-			<button com="save-action">Save</button>
-			<button id="renPopup">Rename</button>
-			<div id="overlay" style="display: none;">
-				<div id="renameBox">
-					<input id="newName" />
-					<button id="doRename">Rename</button>
-					<button id="cancelRename">Cancel</button>
-				</div>
-			</div>
-		</section>
-		<section id="visualSection" style="dipslay: none;">
-			
-		</section>
+            <div id="controls">
+                <table>
+                    <tr>
+                        <th>Saved actions</th>
+                        <td></td>
+                        <th>Current action steps</th>
+                    </tr>
+                    <tr>
+                        <td id="actsList">
+                        </td>
+                        <td></td>
+                        <td id="curAct">
+                        </td>
+                    </tr>
+                </table>
+                <br>
+                <button com="create-new-action">New Action</button>
+                <br>
+                <button com="record-object-pose">Record object poses</button>
+                <br>
+                <button com="save-pose">Save arm pose</button>
+                <br>
+                <button com="execute-action">Execute!</button>
+                <button com="stop-execution">Stop Execution</button>
+                <br>
+                <button com="open-right-hand">Open right hand</button>
+                <button com="open-left-hand">Open left hand</button>
+                <br>
+                <button com="close-right-hand">Close right hand</button>
+                <button com="close-left-hand">Close left hand</button>
+                <div>
+                    <span>
+                        <button com="relax-left-arm">Relax left arm</button>
+                        <button com="freeze-left-arm">Freeze left arm</button>
+                    </span>
+                    <span>
+                        <button com="relax-right-arm">Relax right arm</button>
+                        <button com="freeze-right-arm">Freeze right arm</button>
+                    </span>
+                </div>
+                <button com="look-down">Look down</button>
+                <button com="look-forward">Look forward</button>
+                <br>
+                <button com="save-action">Save action</button>
+                <button id="renPopup">Rename action</button>
+                <div id="overlay" style="display: none;">
+                    <div id="renameBox">
+                        <input id="newName" />
+                        <button id="doRename">Rename</button>
+                        <button id="cancelRename">Cancel</button>
+                    </div>
+                </div>
+            </div>
+            <div id="visualWindow"></div>
 	</body>
 </html>
