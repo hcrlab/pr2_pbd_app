@@ -533,7 +533,7 @@ class Interaction:
                     self.session.selected_step = -1
                     self.session.get_current_action().selected_step_id = -1
                     self.session.remember_head_position()
-                    return [RobotSpeech.START_STATE_RECORDED, GazeGoal.NOD]
+                    return [RobotSpeech.START_STATE_RECORDED, None]
                 else:
                     return [RobotSpeech.OBJECT_NOT_DETECTED, GazeGoal.SHAKE]
         else:
