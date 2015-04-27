@@ -4,12 +4,7 @@
   <!-- This adds speech recognition (pocketsphinx based) -->
   <include file="$(find pr2_pbd_speech_recognition)/launch/command_recognition.launch"/>
 
-    <!-- This is the GUI that lets you send speech commands with buttons and displays what the robot would say -->
-    <node name="pr2_pbd_gui" pkg="rqt_gui" type="rqt_gui" output="screen"></node>
-
     <!-- This is the stuff for visualization (this will run RVIZ) -->
-    <!--  pr2_moveit_config moveit_rviz.launch  -->
-
     <arg name="rviz_config_file" value="$(find pr2_pbd_interaction)/config/pr2_pbd_manipulation.rviz"/>
 
     <!-- rviz -->
@@ -18,7 +13,5 @@
         args="-d $(arg rviz_config_file)" output="screen">
         <rosparam command="load" file="$(find pr2_moveit_config)/config/kinematics.yaml"/>
     </node>
-
-    <!-- <include file="$(find pr2_moveit_config)/launch/moveit_rviz.launch" /> -->
 
 </launch>
