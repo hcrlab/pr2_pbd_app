@@ -249,12 +249,10 @@ window.addEventListener("load", function() {
 	});
 
 	var processResult = function(result) {
-	    console.log('Execution status: ' + result.status + '. Message: ' + result.error_msg)
-	    if (result.status !== 1) {
+	    console.log('Execution status: ' + result.status.status + '. Message: ' + result.error_msg)
+	    if (result.status.status !== 1) {
 	        if (result.error_msg !== '') {
 	            alert('Execution of an action failed with the following error: ' + result.error_msg);
-	        } else {
-	            alert('Execution of an action failed.');
 	        }
 	    }
 	};
