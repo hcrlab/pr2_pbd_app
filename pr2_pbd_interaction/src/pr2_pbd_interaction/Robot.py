@@ -116,7 +116,7 @@ class Robot:
             else:
                 self.status = ExecutionStatus.SUCCEEDED
             rospy.loginfo('Execution finished')
-        self._result_publisher.publish(ExecutionResult(self.status, self.action.get_error_msg()))
+        self._result_publisher.publish(ExecutionResult(ExecutionStatus(self.status), self.action.get_error_msg()))
 
     def continue_execution(self):
         self.is_continue_execution = True
