@@ -57,6 +57,7 @@ add_message_files(
   ArmTarget.msg
   ArmTrajectory.msg
   ExecutionStatus.msg
+  ExecutionResult.msg
   GripperAction.msg
   GuiCommand.msg
   Side.msg

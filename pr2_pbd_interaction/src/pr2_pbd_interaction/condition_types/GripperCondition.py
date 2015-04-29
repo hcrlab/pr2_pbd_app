@@ -34,11 +34,13 @@ class GripperCondition(Condition):
         robot = Robot.get_robot()
         if self.r_gripper_position is not None:
             if abs(self.r_gripper_position - robot.get_gripper_position(0)) > self.threshold:
-                rospy.logwarn("Condition failure: right gripper is not in the same position")
+                self.error_msg = "Right gripper is not in the same position as in the demonstration."
+                rospy.logwarn(self.error_msg)
                 return False
         if self.l_gripper_position is not None:
             if abs(self.l_gripper_position - robot.get_gripper_position(1)) > self.threshold:
-                rospy.logwarn("Condition failure: left gripper is not in the same position")
+                self.error_msg = "Left gripper is not in the same position as in the demonstration."
+                rospy.logwarn(self.error_msg)
                 return False
         return True
 

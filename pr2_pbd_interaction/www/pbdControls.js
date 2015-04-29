@@ -21,6 +21,12 @@ var expListener = new ROSLIB.Topic({
 	messageType : 'pr2_pbd_interaction/ExperimentState'
 });
 
+var resultListener = new ROSLIB.Topic({
+	ros : ros,
+	name : '/execution_result',
+	messageType : 'pr2_pbd_interaction/ExecutionResult'
+});
+
 var expListenerSrvCli = new ROSLIB.Service({
 	ros : ros,
 	name : '/get_experiment_state',
@@ -40,11 +46,11 @@ window.addEventListener("load", function() {
     });
 
     ros.on('connection', function() {
-	console.log('Connected to websocket server.');
+	    console.log('Connected to websocket server.');
     });
 
     ros.on('close', function() {
-	console.log('Connection to websocket server closed.');
+	    console.log('Connection to websocket server closed.');
     });
 
     // Create the main viewer.
@@ -240,6 +246,21 @@ window.addEventListener("load", function() {
 
 	expListener.subscribe(function(state) {
 		drawState(state);
+	});
+
+	var processResult = function(result) {
+	    console.log('Execution status: ' + result.status + '. Message: ' + result.error_msg)
+	    if (result.status !== 1) {
+	        if (result.error_msg !== '') {
+	            alert('Execution of an action failed with the following error: ' + result.error_msg);
+	        } else {
+	            alert('Execution of an action failed.');
+	        }
+	    }
+	};
+
+	resultListener.subscribe(function(result) {
+		processResult(result);
 	});
 
 

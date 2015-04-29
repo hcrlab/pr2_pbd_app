@@ -51,26 +51,28 @@ class ArmStep(Step):
         if not self.ignore_conditions:
             for condition in self.conditions:
                 if not condition.check():
-                    rospy.logwarn("Condition failed when executing arm step.")
+                    rospy.logwarn('Condition failed when executing arm step.')
                     strategy = condition.available_strategies[condition.current_strategy_index]
                     if strategy == Strategy.FAIL_FAST:
-                        rospy.loginfo("Strategy is to fail-fast, stopping.")
+                        rospy.loginfo('Strategy is to fail-fast, stopping.')
                         robot.status = ExecutionStatus.CONDITION_FAILED
+                        self.error_msg = condition.get_error_msg()
                         raise ConditionError()
                     elif strategy == Strategy.SKIP_STEP:
-                        rospy.loginfo("Strategy is to skip step, skipping.")
+                        rospy.loginfo('Strategy is to skip step, skipping.')
                         self.execution_status = StepExecutionStatus.SKIPPED
                         return
                     elif strategy == Strategy.CONTINUE:
-                        rospy.loginfo("Strategy is to continue, ignoring condition failure.")
+                        rospy.loginfo('Strategy is to continue, ignoring condition failure.')
                     else:
-                        rospy.logwarn("Unknown strategy " + str(self.strategy))
+                        rospy.logwarn('Unknown strategy ' + str(self.strategy))
         else:
             rospy.loginfo('Ignoring conditions for arm step')
         if robot.preempt:
             # robot.preempt = False
             robot.status = ExecutionStatus.PREEMPTED
             rospy.logerr('Execution of arm step failed, execution preempted by user.')
+            self.error_msg = 'Execution stopped by user'
             raise StoppedByUserError()
         # send a request to Robot to move the arms to their respective targets
         if (self.type == ArmStep.ARM_TARGET):
@@ -81,8 +83,10 @@ class ArmStep(Step):
                 if robot.preempt:
                     robot.status = ExecutionStatus.PREEMPTED
                     rospy.logerr('Execution of arm step failed, execution preempted by user.')
+                    self.error_msg = 'Execution stopped by user'
                     raise StoppedByUserError()
-                rospy.logwarn('Arms failed to reach target')
+                self.error_msg = 'Arms failed to reach target'
+                rospy.logwarn(self.error_msg)
                 self.execution_status = StepExecutionStatus.FAILED
                 return
         # If arm trajectory action
@@ -94,8 +98,10 @@ class ArmStep(Step):
                 if robot.preempt:
                     robot.status = ExecutionStatus.PREEMPTED
                     rospy.logerr('Execution of arm step failed, execution preempted by user.')
+                    self.error_msg = 'Execution stopped by user'
                     raise StoppedByUserError()
-                rospy.logwarn('Arms failed to reach target')
+                self.error_msg = 'Arms failed to reach target'
+                rospy.logwarn(self.error_msg)
                 self.execution_status = StepExecutionStatus.FAILED
                 return
 
@@ -114,8 +120,8 @@ class ArmStep(Step):
             # Verify that both arms succeeded
             if ((not Robot.arms[0].is_successful()) or
                     (not Robot.arms[1].is_successful())):
-                rospy.logwarn('Aborting execution; ' +
-                              'arms failed to follow trajectory.')
+                self.error_msg = 'Arms failed to follow trajectory.'
+                rospy.logwarn(self.error_msg)
                 self.execution_status = StepExecutionStatus.FAILED
                 return
 

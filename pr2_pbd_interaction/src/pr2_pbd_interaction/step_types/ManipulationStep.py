@@ -79,7 +79,8 @@ class ManipulationStep(Step):
         if len(self.get_unique_objects()) > 0:
             world = World.get_world()
             if not world.update_object_pose():
-                rospy.logwarn("Object detection failed.")
+                self.error_msg = 'Object detection failed.'
+                rospy.logerr(self.error_msg)
                 self.execution_status = StepExecutionStatus.FAILED
                 return
             world_objects = world.get_frame_list()
@@ -87,7 +88,8 @@ class ManipulationStep(Step):
                                                                           world_objects, self.similarity_threshold)
             if map_of_objects_old_to_new is None:
                 # didn't find similar objects
-                rospy.logwarn("Didn't find similar objects, aborting execution.")
+                self.error_msg = "Didn't find objects that are similar to those used in the demonstration."
+                rospy.logerr(self.error_msg)
                 self.execution_status = StepExecutionStatus.FAILED
                 return
 
@@ -95,10 +97,9 @@ class ManipulationStep(Step):
         self.initialize_viz()
         step_to_execute = self.copy()
         if not robot.solve_ik_for_manipulation_step(step_to_execute):
-            # Shouldn't get here, this was supposed to be checked by IKCondition.
-            rospy.logwarn('Problems in finding IK solutions...')
             robot.status = ExecutionStatus.NO_IK
-            rospy.logerr("Execution of a manipulation step failed, unreachable poses.")
+            self.error_msg = "Action contains unreachable poses."
+            rospy.logerr(self.error_msg)
             self.execution_status = StepExecutionStatus.FAILED
             return
         else:
@@ -108,6 +109,7 @@ class ManipulationStep(Step):
                 if robot.preempt:
                     # robot.preempt = False
                     robot.status = ExecutionStatus.PREEMPTED
+                    self.error_msg = 'Execution stopped by user'
                     rospy.logerr('Execution of manipulation step failed, execution preempted by user.')
                     raise StoppedByUserError()
                 try:
@@ -115,10 +117,12 @@ class ManipulationStep(Step):
                     rospy.loginfo('Step ' + str(i) + ' of manipulation step is complete.')
                     if step.execution_status != StepExecutionStatus.SUCCEEDED:
                         rospy.logerr("Execution of a manipulation step failed because arm step failed")
+                        self.error_msg = step.get_error_msg()
                         self.execution_status = StepExecutionStatus.FAILED
                         return
                 except Exception as e:
                     rospy.logerr("Execution of a manipulation step failed: " + str(e))
+                    self.error_msg = step.get_error_msg()
                     self.execution_status = StepExecutionStatus.FAILED
                     return
 

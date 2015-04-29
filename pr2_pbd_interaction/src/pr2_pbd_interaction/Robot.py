@@ -5,7 +5,8 @@ import roslib
 import tf
 from pr2_pbd_interaction.Response import Response
 
-from pr2_pbd_interaction.msg._StepExecutionStatus import StepExecutionStatus
+from pr2_pbd_interaction.msg import StepExecutionStatus
+from pr2_pbd_interaction.msg import ExecutionResult
 
 
 roslib.load_manifest('pr2_pbd_interaction')
@@ -43,6 +44,9 @@ class Robot:
         self.z_offset = 0
 
         rospy.loginfo('Arms have been initialized.')
+
+        self._result_publisher = rospy.Publisher('execution_result',
+                                                ExecutionResult)
 
         Robot.arms[0].set_mode(ArmMode.HOLD)
         Robot.arms[1].set_mode(ArmMode.HOLD)
@@ -112,6 +116,7 @@ class Robot:
             else:
                 self.status = ExecutionStatus.SUCCEEDED
             rospy.loginfo('Execution finished')
+        self._result_publisher.publish(ExecutionResult(self.status, self.action.get_error_msg()))
 
     def continue_execution(self):
         self.is_continue_execution = True

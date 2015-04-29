@@ -26,6 +26,7 @@ class IKCondition(Condition):
 
         robot = Robot.get_robot()
         if not robot.has_ik_solutions_for_arm_steps(self.steps):
-            rospy.logwarn('Condition failure: Problems in finding IK solutions')
+            self.error_msg = "Problems in finding IK solutions - action contains unreachable poses."
+            rospy.logwarn(self.error_msg)
             return False
         return True

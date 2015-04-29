@@ -49,21 +49,23 @@ class SpecificObjectCondition(Condition):
     def check(self):
         # look at the state of the world, verify that the world objects are similar to ours
         if self.is_empty() or len(self.get_unique_objects()) == 0:
-            rospy.loginfo("SpecificObjectCondition satisfied because no objects are required")
+            rospy.loginfo('SpecificObjectCondition satisfied because no objects are required.')
             return True
         from pr2_pbd_interaction.Robot import Robot
         robot = Robot.get_robot()
         world = World.get_world()
         robot.move_head_to_point(self.head_position)
         if not world.update_object_pose():
-            rospy.logwarn("Object detection failed.")
+            self.error_msg = 'Object detection failed.'
+            rospy.logwarn(self.error_msg)
             return False
         world_objects = World.get_world().get_frame_list()
         map_of_objects_old_to_new = World.get_map_of_most_similar_obj(self.get_unique_objects(),
                                                                       world_objects, self.similarity_threshold)
         if map_of_objects_old_to_new is None:
             # didn't find similar objects
-            rospy.logwarn("SpecificObjectCondition failure: didn't find similar objects")
+            self.error_msg = "Didn't find objects that are similar to those used in the demonstration."
+            rospy.logwarn(self.error_msg)
             return False
         return True
 

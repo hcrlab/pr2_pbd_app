@@ -18,6 +18,7 @@ class Step:
         self.ignore_conditions = False
         self.conditions = []
         self.execution_status = None
+        self.error_msg = ''
         if Step.interactive_marker_server is None:
             im_server = InteractiveMarkerServer('programmed_actions')
             Step.interactive_marker_server = im_server
@@ -31,6 +32,9 @@ class Step:
             rospy.loginfo("Changing strategy for condition " + str(condition_index) + " to " + str(strategy_index))
         else:
             rospy.logwarn("Invalid condition index: " + str(condition_index))
+
+    def get_error_msg(self):
+        return self.error_msg
 
     def add_condition(self, condition):
         self.conditions.append(condition)
