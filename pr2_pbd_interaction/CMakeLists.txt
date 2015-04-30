@@ -49,6 +49,7 @@ add_message_files(
   FILES
   Object.msg
   GripperState.msg
+  ActionData.msg
   ArmState.msg
   ExperimentState.msg
   GuiCommand.msg
@@ -69,6 +70,7 @@ add_message_files(
 add_service_files(
   FILES
   GetExperimentState.srv
+  GetSavedActions.srv
 )
 
 ## Generate actions in the 'action' folder
