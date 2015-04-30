@@ -2,7 +2,7 @@
 
 import os.path
 from os import listdir
-from os.path import isfile, join
+from os.path import isfile, join, isdir, exists
 from functools import partial
 import threading
 import yaml
@@ -367,6 +367,12 @@ class ManipulationStep(Step):
 
     @staticmethod
     def get_saved_actions():
+        if not exists(ManipulationStep.action_directory):
+            rospy.logwarn('Directory ' + ManipulationStep.action_directory + ' does not exist.')
+            return []
+        if not isdir(ManipulationStep.action_directory):
+            rospy.logwarn(ManipulationStep.action_directory + ' is not a directory.')
+            return []
         actions = map(ManipulationStep.load,
                       filter(lambda f: f.endswith(ManipulationStep.file_extension),
                              filter(isfile,
