@@ -10,7 +10,7 @@ from pr2_pbd_interaction.srv import GetSavedActions, GetSavedActionsResponse
 import rospy
 
 
-def get_saved_actions():
+def get_saved_actions(dummy):
     actions = ManipulationStep.get_saved_actions()
     actionData = []
     for action in actions:
