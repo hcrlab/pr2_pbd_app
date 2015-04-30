@@ -46,7 +46,7 @@ yaml.add_constructor(u'!ManipulationStep', manipulation_step_constructor)
 class ManipulationStep(Step):
     """ Sequence of ArmSteps.
     """
-    action_directory = rospy.get_param('/pr2_pbd_interaction/actionsRoot', '/home/sonyaa/pbd_manipulation_saved/')
+    action_directory = rospy.get_param('/pr2_pbd_interaction/actionsRoot', '~/pbd_manipulation_saved/')
     file_extension = rospy.get_param('/pr2_pbd_interaction/fileExtension', '.yaml')
 
     def __init__(self, *args, **kwargs):
