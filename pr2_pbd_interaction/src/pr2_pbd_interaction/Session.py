@@ -29,6 +29,7 @@ class Session:
         if self.current_action_index is not None:
             self.selected_step = self.manipulation_actions[self.current_action_index].get_selected_step_id()
             self.manipulation_actions[self.current_action_index].initialize_viz()
+        rospy.loginfo("Current action visualization initialized.")
 
         self._state_publisher = rospy.Publisher('experiment_state',
                                                 ExperimentState)
@@ -36,6 +37,8 @@ class Session:
                       self.get_experiment_state_cb)
 
         self._update_experiment_state()
+
+        rospy.loginfo("Session initialized.")
 
 
     @staticmethod
