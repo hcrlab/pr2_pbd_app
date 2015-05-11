@@ -5,7 +5,7 @@ import roslib
 import tf
 from pr2_pbd_interaction.Response import Response
 
-from pr2_pbd_interaction.msg import StepExecutionStatus
+from pr2_pbd_interaction.msg import StepExecutionStatus, ArmStepType
 from pr2_pbd_interaction.msg import ExecutionResult
 
 
@@ -15,15 +15,13 @@ import tf
 
 import time
 import threading
-from pr2_pbd_interaction.step_types import ArmStep
-from pr2_pbd_interaction.msg import ArmState, GripperState, ArmTarget
+from pr2_pbd_interaction.msg import ArmState, GripperState
 from pr2_pbd_interaction.msg import Side
 from pr2_pbd_interaction.msg import ExecutionStatus
 from geometry_msgs.msg import Pose, Point, PoseStamped, Quaternion, Twist, Vector3, PointStamped
-from pr2_pbd_interaction.Arm import ArmMode, Arm
 from pr2_pbd_interaction.World import World
 from Arm import Arm, ArmMode
-from pr2_pbd_interaction.msg import ArmTarget, Object
+from pr2_pbd_interaction.msg import Object
 
 
 class Robot:
@@ -133,7 +131,7 @@ class Robot:
         for i in range(manipulation_step.n_steps()):
             # For each step check step type
             # If arm target action
-            if (manipulation_step.arm_steps[i].type == ArmStep.ARM_TARGET):
+            if (manipulation_step.arm_steps[i].type == ArmStepType.ARM_TARGET):
                 # Find frames that are relative and convert to absolute
 
                 r_arm, has_solution_r = Robot.solve_ik_for_arm(0,
@@ -148,7 +146,7 @@ class Robot:
                 if (not has_solution_r) or (not has_solution_l):
                     return False
 
-            if (manipulation_step.arm_steps[i].type == ArmStep.ARM_TRAJECTORY):
+            if (manipulation_step.arm_steps[i].type == ArmStepType.ARM_TRAJECTORY):
                 n_frames = len(manipulation_step.arm_steps[i].armTrajectory.timing)
                 for j in range(n_frames):
                     r_arm, has_solution_r = Robot.solve_ik_for_arm(0,
@@ -174,7 +172,7 @@ class Robot:
         for i in range(len(arm_steps)):
             # For each step check step type
             # If arm target action
-            if (arm_steps[i].type == ArmStep.ARM_TARGET):
+            if (arm_steps[i].type == ArmStepType.ARM_TARGET):
                 r_arm, has_solution_r = Robot.solve_ik_for_arm(0,
                                                                arm_steps[i].armTarget.rArm,
                                                                self.z_offset)
@@ -184,7 +182,7 @@ class Robot:
                 if (not has_solution_r) or (not has_solution_l):
                     return False
 
-            if (arm_steps[i].type == ArmStep.ARM_TRAJECTORY):
+            if (arm_steps[i].type == ArmStepType.ARM_TRAJECTORY):
                 n_frames = len(arm_steps[i].armTrajectory.timing)
                 for j in range(n_frames):
                     r_arm, has_solution_r = Robot.solve_ik_for_arm(0,

@@ -51,6 +51,7 @@ add_message_files(
   GripperState.msg
   ActionData.msg
   ArmState.msg
+  ArmStepType.msg
   ExperimentState.msg
   GuiCommand.msg
   RobotSound.msg

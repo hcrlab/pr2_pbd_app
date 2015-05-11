@@ -19,7 +19,7 @@ from pr2_pbd_interaction.RobotSpeech import RobotSpeech
 from pr2_pbd_interaction.Session import Session
 from pr2_pbd_interaction.Response import Response
 from pr2_pbd_interaction.Arm import ArmMode
-from pr2_pbd_interaction.msg import ArmState, GripperState
+from pr2_pbd_interaction.msg import ArmState, GripperState, ArmStepType
 from pr2_pbd_interaction.msg import ArmTarget, Object
 from pr2_pbd_interaction.msg import GripperAction, ArmTrajectory
 from pr2_pbd_interaction.msg import ExecutionStatus, GuiCommand
@@ -247,7 +247,7 @@ class Interaction:
             if (Interaction._is_programming):
                 states = self._get_arm_states()
                 step = ArmStep()
-                step.type = ArmStep.ARM_TARGET
+                step.type = ArmStepType.ARM_TARGET
                 step.armTarget = ArmTarget(states[0], states[1], 0.2, 0.2)
                 actions = [self.robot.get_gripper_state(0),
                            self.robot.get_gripper_state(1)]
@@ -265,7 +265,7 @@ class Interaction:
             if (Interaction._is_programming):
                 states = self._get_arm_states()
                 step = ArmStep()
-                step.type = ArmStep.ARM_TARGET
+                step.type = ArmStepType.ARM_TARGET
                 step.armTarget = ArmTarget(states[0], states[1],
                                            0.2, 0.2)
                 step.gripperAction = GripperAction(

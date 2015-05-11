@@ -6,7 +6,8 @@ import rospy
 
 from pr2_pbd_interaction.Exceptions import ConditionError, StoppedByUserError
 from pr2_pbd_interaction.condition_types.GripperCondition import GripperCondition
-from pr2_pbd_interaction.msg import ExecutionStatus, ArmState, ArmTrajectory, ArmTarget, GripperAction, Strategy
+from pr2_pbd_interaction.msg import ExecutionStatus, ArmState, ArmTrajectory, ArmTarget, GripperAction, Strategy, \
+    ArmStepType
 from pr2_pbd_interaction.msg._StepExecutionStatus import StepExecutionStatus
 from pr2_pbd_interaction.step_types.Step import Step
 
@@ -14,14 +15,12 @@ from pr2_pbd_interaction.step_types.Step import Step
 class ArmStep(Step):
     """ Holds one arm step - a pose for both arms.
     """
-    ARM_TARGET = 0
-    ARM_TRAJECTORY = 1
     def __init__(self, *args, **kwargs):
         from pr2_pbd_interaction.Robot import Robot
         Step.__init__(self, *args, **kwargs)
         self.step_type = "ArmStep"
         self.conditions = [GripperCondition()]
-        self.type = ArmStep.ARM_TARGET
+        self.type = ArmStepType.ARM_TARGET
         self.armTarget = None
         self.armTrajectory = None
         self.gripperAction = None
@@ -75,7 +74,7 @@ class ArmStep(Step):
             self.error_msg = 'Execution stopped by user'
             raise StoppedByUserError()
         # send a request to Robot to move the arms to their respective targets
-        if (self.type == ArmStep.ARM_TARGET):
+        if (self.type == ArmStepType.ARM_TARGET):
             rospy.loginfo('Will perform arm target action step.')
 
             if (not robot.move_to_joints(self.armTarget.rArm,
@@ -90,7 +89,7 @@ class ArmStep(Step):
                 self.execution_status = StepExecutionStatus.FAILED
                 return
         # If arm trajectory action
-        elif (self.type == ArmStep.ARM_TRAJECTORY):
+        elif (self.type == ArmStepType.ARM_TRAJECTORY):
             rospy.loginfo('Will perform arm trajectory action step.')
             # First move to the start frame
             if (not robot.move_to_joints(self.armTrajectory.r_arm[0],
@@ -158,7 +157,7 @@ class ArmStep(Step):
         """Makes a copy of an arm step"""
         copy = ArmStep()
         copy.type = int(self.type)
-        if (copy.type == ArmStep.ARM_TARGET):
+        if (copy.type == ArmStepType.ARM_TARGET):
             copy.armTarget = ArmTarget()
             copy.armTarget.rArmVelocity = float(
                                     self.armTarget.rArmVelocity)
@@ -168,7 +167,7 @@ class ArmStep(Step):
                                                 self.armTarget.rArm)
             copy.armTarget.lArm = ArmStep._copy_arm_state(
                                                 self.armTarget.lArm)
-        elif (copy.type == ArmStep.ARM_TRAJECTORY):
+        elif (copy.type == ArmStepType.ARM_TRAJECTORY):
             copy.armTrajectory = ArmTrajectory()
             copy.armTrajectory.timing = self.armTrajectory.timing[:]
             for j in range(len(self.armTrajectory.timing)):
@@ -208,12 +207,12 @@ class ArmStep(Step):
         return copy
 
     def is_relative(self, arm_index):
-        if self.type == ArmStep.ARM_TARGET:
+        if self.type == ArmStepType.ARM_TARGET:
             if arm_index == 0 and self.armTarget.rArm.refFrame == ArmState.OBJECT:
                     return True
             if arm_index == 1 and self.armTarget.lArm.refFrame == ArmState.OBJECT:
                     return True
-        elif self.type == ArmStep.ARM_TRAJECTORY:
+        elif self.type == ArmStepType.ARM_TRAJECTORY:
             ## TODO
             pass
         return False
