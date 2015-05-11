@@ -17,6 +17,7 @@ import rospy
 def get_head_position():
     try:
         tf_listener = TransformListener()
+        rospy.sleep(1.0)
         ref_frame = "/head_tilt_link"
         timestamp = tf_listener.getLatestCommonTime(ref_frame,
                                                           "/base_link")
@@ -33,7 +34,7 @@ def get_head_position():
 
 if __name__ == '__main__':
     rospy.init_node('save_head_pose')
-    data_directory = rospy.get_param('/pr2_pbd_interaction/headPosesRoot', '.')
+    data_directory = rospy.get_param('/pr2_pbd_interaction/headPosesRoot', './')
     file_extension = rospy.get_param('/pr2_pbd_interaction/fileExtension', '.yaml')
     if not os.path.exists(data_directory):
         os.makedirs(data_directory)
