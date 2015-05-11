@@ -6,8 +6,7 @@ from pr2_pbd_interaction.Robot import Robot
 from pr2_pbd_interaction.msg import HeadPoseData
 import sys
 import os
-from os import listdir
-from os.path import isfile, exists
+import yaml
 
 import rospy
 

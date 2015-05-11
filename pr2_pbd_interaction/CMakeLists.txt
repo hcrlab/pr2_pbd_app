@@ -61,6 +61,7 @@ add_message_files(
   ExecutionResult.msg
   GripperAction.msg
   GuiCommand.msg
+  HeadPoseData.msg
   Side.msg
   StepExecutionStatus.msg
   Strategy.msg
@@ -71,6 +72,7 @@ add_service_files(
   FILES
   GetExperimentState.srv
   GetSavedActions.srv
+  GetSavedHeadPoses.srv
 )
 
 ## Generate actions in the 'action' folder

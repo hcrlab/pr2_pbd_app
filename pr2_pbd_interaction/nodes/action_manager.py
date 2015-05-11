@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 import roslib
 roslib.load_manifest('pr2_pbd_interaction')
+import os
+from os import listdir
+from os.path import isfile, join
+import yaml
 
 from pr2_pbd_interaction.step_types import ManipulationStep
 from pr2_pbd_interaction.msg import ActionData, HeadPoseData
@@ -9,6 +13,7 @@ from pr2_pbd_interaction.srv import GetSavedActions, GetSavedActionsResponse, \
 
 
 import rospy
+
 
 def get_saved_head_poses(dummy):
     head_poses = []
@@ -20,7 +25,8 @@ def get_saved_head_poses(dummy):
         file_path = join(data_directory, f)
         if isfile(file_path) and file_path.endswith(file_extension):
             with open(file_path, 'r') as content_file:
-                head_poses.append()
+                head_poses.append(yaml.load(content_file))
+    rospy.loginfo(head_poses)
     return GetSavedHeadPosesResponse(head_poses)
 
 
