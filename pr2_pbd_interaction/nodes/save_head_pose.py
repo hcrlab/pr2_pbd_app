@@ -6,7 +6,6 @@ import tf
 
 roslib.load_manifest('pr2_pbd_interaction')
 
-from pr2_pbd_interaction.Robot import Robot
 from pr2_pbd_interaction.msg import HeadPoseData
 import sys
 import os
