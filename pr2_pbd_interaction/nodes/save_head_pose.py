@@ -17,7 +17,7 @@ if __name__ == '__main__':
     if not os.path.exists(data_directory):
         os.makedirs(data_directory)
     pose_msg = HeadPoseData()
-    pose_msg.head_pose = Robot.get_robot().get_head_position()
+    pose_msg.head_pose = Robot.get_head_position()
     pose_msg.id = 0
     while os.path.isfile(data_directory + str(pose_msg.id) + file_extension):
         pose_msg.id += 1
