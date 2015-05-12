@@ -74,6 +74,7 @@ add_service_files(
   GetExperimentState.srv
   GetSavedActions.srv
   GetSavedHeadPoses.srv
+  ExecuteHeadStep.srv
 )
 
 ## Generate actions in the 'action' folder
