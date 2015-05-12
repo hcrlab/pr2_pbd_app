@@ -10,6 +10,7 @@ from pr2_pbd_interaction.step_types import ManipulationStep
 from pr2_pbd_interaction.msg import ActionData, HeadPoseData
 from pr2_pbd_interaction.srv import GetSavedActions, GetSavedActionsResponse, \
     GetSavedHeadPoses, GetSavedHeadPosesResponse, ExecuteHeadStep, ExecuteHeadStepResponse
+from pr2_pbd_interaction.Robot import Robot
 
 
 import rospy
