@@ -9,7 +9,7 @@ import yaml
 from pr2_pbd_interaction.step_types import ManipulationStep
 from pr2_pbd_interaction.msg import ActionData, HeadPoseData
 from pr2_pbd_interaction.srv import GetSavedActions, GetSavedActionsResponse, \
-    GetSavedHeadPoses, GetSavedHeadPosesResponse
+    GetSavedHeadPoses, GetSavedHeadPosesResponse, ExecuteHeadStep, ExecuteHeadStepResponse
 
 
 import rospy
