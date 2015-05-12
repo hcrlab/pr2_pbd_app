@@ -55,10 +55,10 @@ class Arm:
 
         self.lock = threading.Lock()
         rospy.Subscriber('joint_states', JointState, self.joint_states_cb)
-
-        rospy.loginfo('Initializing ' + self._side() + ' arm.')
-        rospy.loginfo("Initializing moveit")
-        self.arm_commander = moveit_commander.MoveGroupCommander(self._side() + "_arm")
+        #
+        # rospy.loginfo('Initializing ' + self._side() + ' arm.')
+        # rospy.loginfo("Initializing moveit")
+        # self.arm_commander = moveit_commander.MoveGroupCommander(self._side() + "_arm")
 
         switch_controller = 'pr2_controller_manager/switch_controller'
         rospy.wait_for_service(switch_controller)
