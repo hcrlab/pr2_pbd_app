@@ -17,7 +17,7 @@ import rospy
 
 
 def get_saved_head_poses(dummy):
-    rospy.loginfo('Getting saved head poses')
+    rospy.loginfo('Getting saved head poses.')
     head_poses = []
     data_directory = rospy.get_param('/pr2_pbd_interaction/headPosesRoot')
     file_extension = rospy.get_param('/pr2_pbd_interaction/fileExtension', '.yaml')
@@ -32,7 +32,7 @@ def get_saved_head_poses(dummy):
 
 
 def execute_head_step(req):
-    rospy.loginfo('Executing head pose')
+    rospy.loginfo('Executing head pose.')
     step_id = req.step_id
     data_directory = rospy.get_param('/pr2_pbd_interaction/headPosesRoot')
     file_extension = rospy.get_param('/pr2_pbd_interaction/fileExtension', '.yaml')
@@ -57,7 +57,11 @@ def get_saved_actions(dummy):
 if __name__ == '__main__':
     rospy.init_node('action_manager')
     robot = Robot.get_robot()
+    rospy.loginfo('Robot initialized.')
     s1 = rospy.Service('get_saved_actions', GetSavedActions, get_saved_actions)
+    rospy.loginfo('Started get saved manipulation actions service.')
     s2 = rospy.Service('get_saved_head_poses', GetSavedHeadPoses, get_saved_head_poses)
+    rospy.loginfo('Started get saved head poses service.')
     s3 = rospy.Service('execute_head_step', ExecuteHeadStep, execute_head_step)
+    rospy.loginfo('Started execute head step service.')
     rospy.spin()

@@ -67,6 +67,7 @@ class Response:
             Response.gaze_client = SimpleActionClient('gaze_action',
                                                        GazeAction)
             Response.gaze_client.wait_for_server()
+            rospy.loginfo('Initialized gaze client.')
 
         if (Response._robot_speech is None):
             Response._robot_speech = RobotSpeech()
