@@ -38,7 +38,7 @@ class Interaction:
     def __init__(self):
         self.world = World.get_world()
         self.robot = Robot.get_robot()
-        self.session = Session(object_list=self.world.get_frame_list())
+        self.session = Session()
         self._viz_publisher = rospy.Publisher('visualization_marker_array',
                                               MarkerArray)
 

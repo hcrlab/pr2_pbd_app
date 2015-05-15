@@ -15,7 +15,7 @@ class Session:
 
     session = None
 
-    def __init__(self, object_list):
+    def __init__(self):
         Session.session = self
 
         self.selected_step = -1
@@ -43,6 +43,8 @@ class Session:
 
     @staticmethod
     def get_session():
+        if Session.session == None:
+            Session.session = Session()
         return Session.session
 
     def selected_arm_step_cb(self, selected_step):
