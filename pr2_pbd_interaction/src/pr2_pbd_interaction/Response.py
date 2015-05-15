@@ -48,17 +48,7 @@ class Response:
     def __init__(self, function_to_call, function_param):
         self.function_to_call = function_to_call
         self.function_param = function_param
-
-        if (Response.gaze_client is None):
-            Response.gaze_client = SimpleActionClient('gaze_action',
-                                                       GazeAction)
-            Response.gaze_client.wait_for_server()
-
-        if (Response._robot_speech is None):
-            Response._robot_speech = RobotSpeech()
-
-        if (Response._sound_client is None):
-            Response._sound_client = SoundClient()
+        Response.init_clients()
 
     def respond(self):
         ''' Triggers the defined response'''
@@ -70,6 +60,19 @@ class Response:
         # Gaze response
         if (gaze_resp != None):
             Response.perform_gaze_action(gaze_resp)
+
+    @staticmethod
+    def init_clients():
+        if (Response.gaze_client is None):
+            Response.gaze_client = SimpleActionClient('gaze_action',
+                                                       GazeAction)
+            Response.gaze_client.wait_for_server()
+
+        if (Response._robot_speech is None):
+            Response._robot_speech = RobotSpeech()
+
+        if (Response._sound_client is None):
+            Response._sound_client = SoundClient()
 
     @staticmethod
     def perform_gaze_action(gaze_action):

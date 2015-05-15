@@ -45,6 +45,7 @@ class Robot:
 
         self._result_publisher = rospy.Publisher('execution_result',
                                                 ExecutionResult)
+        Response.init_clients()
 
         Robot.arms[0].set_mode(ArmMode.HOLD)
         Robot.arms[1].set_mode(ArmMode.HOLD)
