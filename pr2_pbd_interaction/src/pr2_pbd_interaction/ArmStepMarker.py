@@ -8,7 +8,7 @@ import tf
 from tf.transformations import quaternion_matrix
 from tf.transformations import quaternion_inverse
 from pr2_pbd_interaction.step_types.ArmStep import ArmStep
-from pr2_pbd_interaction.msg import ArmState, Object, GripperState
+from pr2_pbd_interaction.msg import ArmState, Object, GripperState, ArmStepType
 from geometry_msgs.msg import Quaternion, Vector3, Point, Pose
 from std_msgs.msg import Header, ColorRGBA
 from visualization_msgs.msg import Marker, InteractiveMarker
