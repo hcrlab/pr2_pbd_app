@@ -29,6 +29,7 @@ def get_saved_head_poses(dummy):
                 head_poses.append(yaml.load(content_file))
     return GetSavedHeadPosesResponse(head_poses)
 
+
 def execute_head_step(req):
     step_id = req.step_id
     data_directory = rospy.get_param('/pr2_pbd_interaction/headPosesRoot')
@@ -38,7 +39,7 @@ def execute_head_step(req):
         return ExecuteHeadStepResponse(False)
     with open(file_path, 'r') as content_file:
         head_pose = yaml.load(content_file).head_pose
-        Robot.get_robot().move_head_to_point(head_pose)
+        robot.move_head_to_point(head_pose)
         return ExecuteHeadStepResponse(True)
 
 
@@ -52,6 +53,7 @@ def get_saved_actions(dummy):
 
 if __name__ == '__main__':
     rospy.init_node('action_manager')
+    robot = Robot.get_robot()
     s1 = rospy.Service('get_saved_actions', GetSavedActions, get_saved_actions)
     s2 = rospy.Service('get_saved_head_poses', GetSavedHeadPoses, get_saved_head_poses)
     s3 = rospy.Service('execute_head_step', ExecuteHeadStep, execute_head_step)
