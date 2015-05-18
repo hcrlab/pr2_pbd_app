@@ -38,11 +38,13 @@ def execute_head_step(req):
     file_extension = rospy.get_param('/pr2_pbd_interaction/fileExtension', '.yaml')
     file_path = data_directory + str(step_id) + file_extension
     if not os.path.exists(file_path):
-        return ExecuteHeadStepResponse(False)
+        return ExecuteHeadStepResponse(0)
     with open(file_path, 'r') as content_file:
         head_pose = yaml.load(content_file).head_pose
+        rospy.loginfo('Sending goal.')
         robot.move_head_to_point(head_pose)
-        return ExecuteHeadStepResponse(True)
+        rospy.loginfo('Sent goal.')
+        return ExecuteHeadStepResponse(1)
 
 
 def get_saved_actions(dummy):
