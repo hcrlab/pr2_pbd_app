@@ -41,7 +41,7 @@ def move_head_to_point_and_wait(point):
     headGoal.target.point = Point(1,0,1)
     headGoal.target.point = point
     headActionClient.send_goal(headGoal)
-    headActionClient.wait_for_result(10)
+    headActionClient.wait_for_result(rospy.Duration(10))
     rospy.loginfo("Head action client finished")
 
 
