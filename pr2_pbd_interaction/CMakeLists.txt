@@ -66,6 +66,7 @@ add_message_files(
   Side.msg
   StepExecutionStatus.msg
   Strategy.msg
+  ConditionType.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -75,6 +76,8 @@ add_service_files(
   GetSavedActions.srv
   GetSavedHeadPoses.srv
   ExecuteHeadStep.srv
+  ExecuteManipulationStep.srv
+  CheckManipulationConditions.srv
 )
 
 ## Generate actions in the 'action' folder

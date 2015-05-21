@@ -1,0 +1,3 @@
+uint8 OBJECTS_PRESENT=0
+uint8 POSES_REACHABLE=1
+uint8 type

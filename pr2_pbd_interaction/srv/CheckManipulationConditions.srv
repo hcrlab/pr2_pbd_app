@@ -1,0 +1,4 @@
+uint8 step_id
+pr2_pbd_interaction/ConditionType condition_type
+---
+bool result

@@ -8,9 +8,11 @@ from os.path import isfile, join
 import yaml
 
 from pr2_pbd_interaction.step_types import ManipulationStep
-from pr2_pbd_interaction.msg import ActionData, HeadPoseData
+from pr2_pbd_interaction.msg import ActionData, HeadPoseData, ConditionType
 from pr2_pbd_interaction.srv import GetSavedActions, GetSavedActionsResponse, \
-    GetSavedHeadPoses, GetSavedHeadPosesResponse, ExecuteHeadStep, ExecuteHeadStepResponse
+    GetSavedHeadPoses, GetSavedHeadPosesResponse, ExecuteHeadStep, ExecuteHeadStepResponse,\
+    ExecuteManipulationStep, ExecuteManipulationStepResponse, \
+    CheckManipulationConditions, CheckManipulationConditionsResponse
 from pr2_pbd_interaction.Robot import Robot
 from actionlib import SimpleActionClient
 from pr2_controllers_msgs.msg import PointHeadAction, PointHeadGoal
@@ -59,6 +61,36 @@ def execute_head_step(req):
         return ExecuteHeadStepResponse(1)
 
 
+def execute_manipulation_step(req):
+    rospy.loginfo('Executing manipulation step.')
+    step_id = req.step_id
+    actions = ManipulationStep.get_saved_actions()
+    if step_id >= len(actions):
+        return ExecuteHeadStepResponse(0)
+    action = actions[step_id]
+    action.execute()
+    return ExecuteManipulationStepResponse(action.execution_status)
+
+
+def check_manipulation_conditions(req):
+    condition_type = req.condition_type
+    rospy.loginfo('Checking condition of type ' + str(condition_type))
+    step_id = req.step_id
+    actions = ManipulationStep.get_saved_actions()
+    if step_id >= len(actions):
+        return CheckManipulationConditionsResponse(False)
+    action = actions[step_id]
+    if condition_type == ConditionType.OBJECTS_PRESENT:
+        #TODO check condition
+        return CheckManipulationConditionsResponse(True)
+    elif condition_type == ConditionType.POSES_REACHABLE:
+        #TODO check condition
+        return CheckManipulationConditionsResponse(True)
+    else:
+        rospy.logwarn('Unknown condition type: ' + str(condition_type))
+        return CheckManipulationConditionsResponse(False)
+
+
 def get_saved_actions(dummy):
     rospy.loginfo('Getting saved manipulation poses')
     actions = ManipulationStep.get_saved_actions()
@@ -80,4 +112,8 @@ if __name__ == '__main__':
     rospy.loginfo('Started get saved head poses service.')
     s3 = rospy.Service('execute_head_step', ExecuteHeadStep, execute_head_step)
     rospy.loginfo('Started execute head step service.')
+    s4 = rospy.Service('execute_manipulation_step', ExecuteManipulationStep, execute_manipulation_step)
+    rospy.loginfo('Started execute manipulation step service.')
+    s5 = rospy.Service('check_manipulation_conditions', CheckManipulationConditions, check_manipulation_conditions)
+    rospy.loginfo('Started check manipulation conditions service.')
     rospy.spin()
