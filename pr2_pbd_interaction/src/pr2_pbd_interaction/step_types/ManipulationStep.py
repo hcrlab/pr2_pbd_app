@@ -230,6 +230,7 @@ class ManipulationStep(Step):
                     return False
                 self.update_objects()
                 self.save()
+            rospy.loginfo('Condition passed successfully.')
             return True
         elif condition_type == ConditionType.POSES_REACHABLE:
             from pr2_pbd_interaction.Robot import Robot
@@ -238,6 +239,7 @@ class ManipulationStep(Step):
             if not robot.solve_ik_for_manipulation_step(step_to_check):
                 rospy.logwarn("Action contains unreachable poses.")
                 return False
+            rospy.loginfo('Condition passed successfully.')
             return True
         else:
             rospy.logwarn('Unknown condition type: ' + str(condition_type))
