@@ -14,7 +14,7 @@ from pr2_pbd_interaction.Exceptions import ConditionError, StoppedByUserError
 from pr2_pbd_interaction.World import World
 from pr2_pbd_interaction.condition_types.IKCondition import IKCondition
 from pr2_pbd_interaction.condition_types.SpecificObjectCondition import SpecificObjectCondition
-from pr2_pbd_interaction.msg import ArmState, ExecutionStatus, ArmMode, Strategy, StepExecutionStatus
+from pr2_pbd_interaction.msg import ArmState, ExecutionStatus, ArmMode, Strategy, StepExecutionStatus, ConditionType
 from pr2_pbd_interaction.step_types.Step import Step
 
 
@@ -211,6 +211,37 @@ class ManipulationStep(Step):
                                             map_of_objects_old_to_new, has_real_objects)
         self.lock.release()
 
+    def check_condition(self, condition_type):
+        # TODO switch to actual condition classes/objects
+        # TODO save state? after we checked object condition, objects should be updated
+        # Currently just resave the action, but that may be suboptimal
+        if condition_type == ConditionType.OBJECTS_PRESENT:
+            if len(self.get_unique_objects()) > 0:
+                world = World.get_world()
+                if not world.update_object_pose():
+                    rospy.logwarn('Object detection failed.')
+                    return False
+                world_objects = world.get_frame_list()
+                map_of_objects_old_to_new = World.get_map_of_most_similar_obj(self.get_unique_objects(),
+                                                                              world_objects, self.similarity_threshold)
+                if map_of_objects_old_to_new is None:
+                    # didn't find similar objects
+                    rospy.logwarn("Didn't find objects that are similar to those used in the demonstration.")
+                    return False
+                self.update_objects()
+                self.save()
+        elif condition_type == ConditionType.POSES_REACHABLE:
+            from pr2_pbd_interaction.Robot import Robot
+            robot = Robot.get_robot()
+            step_to_check = self.copy()
+            if not robot.solve_ik_for_manipulation_step(step_to_check):
+                rospy.logwarn("Action contains unreachable poses.")
+                return False
+            return True
+        else:
+            rospy.logwarn('Unknown condition type: ' + str(condition_type))
+            return False
+
     def get_unique_objects(self):
         objects = []
         object_names = []
@@ -228,7 +259,7 @@ class ManipulationStep(Step):
     def reset_viz(self):
         self.lock.acquire()
         World.get_world().remove_fake_objects()
-        #World.get_world().clear_all_objects()
+        # World.get_world().clear_all_objects()
         self.marker_sequence.reset_viz()
         self.lock.release()
 
@@ -352,6 +383,7 @@ class ManipulationStep(Step):
 
     def remember_head_position(self):
         from pr2_pbd_interaction.Robot import Robot
+
         self.set_head_position(Robot.get_head_position())
 
     def clear(self):
@@ -423,5 +455,6 @@ def manipulation_step_representer(dumper, data):
                                                            'objects': data.objects,
                                                            'name': data.name,
                                                            'id': data.id})
+
 
 yaml.add_representer(ManipulationStep, manipulation_step_representer)

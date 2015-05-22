@@ -80,15 +80,7 @@ def check_manipulation_conditions(req):
     if step_id >= len(actions):
         return CheckManipulationConditionsResponse(False)
     action = actions[step_id]
-    if condition_type == ConditionType.OBJECTS_PRESENT:
-        #TODO check condition
-        return CheckManipulationConditionsResponse(True)
-    elif condition_type == ConditionType.POSES_REACHABLE:
-        #TODO check condition
-        return CheckManipulationConditionsResponse(True)
-    else:
-        rospy.logwarn('Unknown condition type: ' + str(condition_type))
-        return CheckManipulationConditionsResponse(False)
+    return CheckManipulationConditionsResponse(action.check_condition(condition_type))
 
 
 def get_saved_actions(dummy):
