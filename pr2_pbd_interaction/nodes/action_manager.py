@@ -74,12 +74,13 @@ def execute_manipulation_step(req):
 
 def check_manipulation_conditions(req):
     condition_type = req.condition_type.type
-    rospy.loginfo('Checking condition of type ' + str(condition_type))
+    rospy.loginfo('Getting action for condition checking...')
     step_id = req.step_id
     actions = ManipulationStep.get_saved_actions()
     if step_id >= len(actions):
         return CheckManipulationConditionsResponse(False)
     action = actions[step_id]
+    rospy.loginfo('Checking condition of type ' + str(condition_type))
     return CheckManipulationConditionsResponse(action.check_condition(condition_type))
 
 
