@@ -230,6 +230,7 @@ class ManipulationStep(Step):
                     return False
                 self.update_objects()
                 self.save()
+            return True
         elif condition_type == ConditionType.POSES_REACHABLE:
             from pr2_pbd_interaction.Robot import Robot
             robot = Robot.get_robot()
