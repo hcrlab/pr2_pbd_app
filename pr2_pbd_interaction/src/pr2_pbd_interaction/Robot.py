@@ -51,8 +51,8 @@ class Robot:
         Robot.arms[1].set_mode(ArmMode.HOLD)
         Robot.arms[0].check_gripper_state()
         Robot.arms[1].check_gripper_state()
-        Robot.arms[Side.RIGHT].close_gripper()
-        Robot.arms[Side.LEFT].close_gripper()
+        # Robot.arms[Side.RIGHT].close_gripper()
+        # Robot.arms[Side.LEFT].close_gripper()
         self.status = ExecutionStatus.NOT_EXECUTING
         rospy.loginfo('Robot initialized.')
 
