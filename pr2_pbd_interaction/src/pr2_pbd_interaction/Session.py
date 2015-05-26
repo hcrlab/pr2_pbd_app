@@ -25,6 +25,7 @@ class Session:
         if not os.path.exists(action_directory):
             os.makedirs(action_directory)
         self.manipulation_actions = ManipulationStep.get_saved_actions()
+        rospy.loginfo("Loaded saved manipulation actions.")
         self.current_action_index = 0 if len(self.manipulation_actions) > 0 else None
         if self.current_action_index is not None:
             self.selected_step = self.manipulation_actions[self.current_action_index].get_selected_step_id()

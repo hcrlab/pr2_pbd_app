@@ -200,6 +200,7 @@ class ManipulationStep(Step):
             has_real_objects = False
         action_objects = None
         map_of_objects_old_to_new = None
+        rospy.logdebug('Got objects for initializing visualization.')
         for condition in self.conditions:
             if isinstance(condition, SpecificObjectCondition):
                 action_objects = condition.get_objects()

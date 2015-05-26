@@ -158,6 +158,7 @@ class ArmStepMarkerSequence:
     def initialize_viz(self, steps, action_objects, world_objects, map_of_objects_old_to_new, has_real_objects):
         """Initialize visualization"""
         self.reset_viz()
+        rospy.loginfo('Reset viz.')
         self.set_total_n_markers(len(steps))
         for i in range(len(steps)):
             step = steps[i]
@@ -187,7 +188,9 @@ class ArmStepMarkerSequence:
                 self.r_links[i] = self._get_link(0, i)
                 self.l_links[i] = self._get_link(1, i)
 
+        rospy.loginfo('Created markers.')
         self._update_markers()
+        rospy.loginfo('Updated markers.')
         self.update_viz()
 
     def marker_click_cb(self, uid, is_selected):
