@@ -54,6 +54,7 @@ class Robot:
         Robot.arms[Side.RIGHT].close_gripper()
         Robot.arms[Side.LEFT].close_gripper()
         self.status = ExecutionStatus.NOT_EXECUTING
+        rospy.loginfo('Robot initialized.')
 
 
     @staticmethod
