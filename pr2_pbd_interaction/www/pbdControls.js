@@ -27,6 +27,12 @@ var resultListener = new ROSLIB.Topic({
 	messageType : 'pr2_pbd_interaction/ExecutionResult'
 });
 
+var tfListener = new ROSLIB.Topic({
+	ros : ros,
+	name : '/current_tf_transforms_throttle',
+	messageType : 'tf/tfMessage'
+});
+
 var expListenerSrvCli = new ROSLIB.Service({
 	ros : ros,
 	name : '/get_experiment_state',
@@ -127,6 +133,10 @@ window.addEventListener("load", function() {
 
 	var actsListCont = document.querySelector("#actsList");
 	var stepsSpan = document.querySelector("#curAct");
+	var frameSelector = document.querySelector("#framesList");
+	var frameOptions = document.createElement("select");
+	frameOptions.id = "frameOptions";
+	frameSelector.appendChild(frameOptions);
 
 	var roboState = {
 		recording: false,
@@ -261,6 +271,20 @@ window.addEventListener("load", function() {
 		processResult(result);
 	});
 
+	var addTfOptions = function(result) {
+
+		//Create and append the options
+		for (var i = 0; i < result.transforms.length; i++) {
+		    var option = document.createElement("option");
+		    option.value = result.transforms[i].header.frame_id;
+		    option.text = result.transforms[i].header.frame_id;
+		    frameOptions.appendChild(option);
+		}
+	};
+
+	tfListener.subscribe(function(result) {
+		addTfOptions(result);
+	});
 
 	expListenerSrvCli.callService(new ROSLIB.ServiceRequest({}), function(result) {
 		drawState(result.state);

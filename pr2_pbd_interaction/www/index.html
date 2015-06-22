@@ -97,12 +97,17 @@
                         <th>Saved actions</th>
                         <td></td>
                         <th>Current action steps</th>
+                        <td></td>
+                        <th>Frame id:</th>
                     </tr>
                     <tr>
                         <td id="actsList">
                         </td>
                         <td></td>
                         <td id="curAct">
+                        </td>
+                        <td></td>
+                        <td id="framesList">
                         </td>
                     </tr>
                 </table>
@@ -136,6 +141,9 @@
                 <br>
                 <button com="save-action">Save action</button>
                 <button id="renPopup">Rename action</button>
+                <br>
+                <button id="emailActions">Email me actions!</button>
+                <button id="exportActions">Export actions as yaml!</button>
                 <div id="overlay" style="display: none;">
                     <div id="renameBox">
                         <input id="newName" />

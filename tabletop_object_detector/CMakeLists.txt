@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(tabletop_object_detector)
 
 find_package(catkin REQUIRED COMPONENTS 
-	message_generation 
+	message_generation
 	roscpp
 	geometry_msgs
 	shape_msgs
@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
 	pcl_ros
 	sensor_msgs
 	tf
+	sensor_msgs
 	visualization_msgs)
 
 add_message_files(
@@ -38,12 +39,14 @@ generate_messages(
 	geometry_msgs
 	shape_msgs
 	household_objects_database_msgs
+	sensor_msgs
 )
 
 catkin_package(CATKIN_DEPENDS message_runtime
                INCLUDE_DIRS include)
 
 add_executable(tabletop_segmentation src/tabletop_segmentation.cpp src/marker_generator.cpp)
+add_dependencies(tabletop_segmentation tabletop_segmentation_generate_messages_cpp)
 
 target_link_libraries(tabletop_segmentation
 	${catkin_LIBRARIES}
