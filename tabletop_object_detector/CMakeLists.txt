@@ -46,8 +46,8 @@ catkin_package(CATKIN_DEPENDS message_runtime
                INCLUDE_DIRS include)
 
 add_executable(tabletop_segmentation src/tabletop_segmentation.cpp src/marker_generator.cpp)
-add_dependencies(tabletop_segmentation tabletop_segmentation_generate_messages_cpp)
-
+add_dependencies(tabletop_segmentation tabletop_object_detector_generate_messages_cpp)
+# add_dependencies(your_program ${tabletop_segmentation_EXPORTED_TARGETS})
 target_link_libraries(tabletop_segmentation
 	${catkin_LIBRARIES}
 )
