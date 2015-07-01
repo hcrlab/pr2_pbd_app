@@ -12,6 +12,8 @@
         <script src="http://cdn.robotwebtools.org/ros3djs/current/ros3d.js"></script>
 		<script src="js-yaml.js"></script>
 		<script src="pbdControls.js"></script>
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <!-- <script src="accordion.js"></script> -->
 		<style>
 
 		html, body {
@@ -94,22 +96,14 @@
             <div id="controls">
                 <table>
                     <tr>
-                        <th>Saved actions</th>
-                        <td></td>
-                        <th>Current action steps</th>
-                        <td></td>
-                        <th>Frame id:</th>
+                        <th>Actions</th>
                     </tr>
                     <tr>
-                        <td id="actsList">
+                        <td id="actsTable">
+                        <div class="accordion" id="actsList">
+                        </div>
                         </td>
-                        <td></td>
-                        <td id="curAct">
-                        </td>
-                        <td></td>
-                        <td id="framesList">
-                        </td>
-                    </tr>
+                        
                 </table>
                 <br>
                 <button com="create-new-action">New Action</button>

@@ -1,4 +1,14 @@
 //initialize ros library
+
+function close_accordion_section() {
+			jQuery('.accordion .accordion-section-title').removeClass('active');
+			jQuery('.accordion .accordion-section-content').slideUp(300).removeClass('open');
+}
+
+var switching = false;
+
+var current_action = "none";
+
 var ros = new ROSLIB.Ros({
 	url : 'ws://localhost:9090'
   });
@@ -27,16 +37,22 @@ var resultListener = new ROSLIB.Topic({
 	messageType : 'pr2_pbd_interaction/ExecutionResult'
 });
 
-var tfListener = new ROSLIB.Topic({
-	ros : ros,
-	name : '/current_tf_transforms_throttle',
-	messageType : 'tf/tfMessage'
-});
+// var tfListener = new ROSLIB.Topic({
+// 	ros : ros,
+// 	name : '/current_tf_transforms_throttle',
+// 	messageType : 'tf/tfMessage'
+// });
 
 var expListenerSrvCli = new ROSLIB.Service({
 	ros : ros,
 	name : '/get_experiment_state',
 	serviceType : 'pr2_pbd_interaction/GetExperimentState'
+});
+
+var tfSrv = new ROSLIB.Service({
+	ros : ros,
+	name : '/tf_service',
+	serviceType : 'pr2_pbd_interaction/CurrentTf'
 });
 
 window.lockUpdate = false;
@@ -132,11 +148,11 @@ window.addEventListener("load", function() {
 	});
 
 	var actsListCont = document.querySelector("#actsList");
-	var stepsSpan = document.querySelector("#curAct");
-	var frameSelector = document.querySelector("#framesList");
-	var frameOptions = document.createElement("select");
-	frameOptions.id = "frameOptions";
-	frameSelector.appendChild(frameOptions);
+	// var stepsSpan = document.querySelector("#curAct");
+	// var frameSelector = document.querySelector("#framesList");
+	// var frameOptions = document.createElement("select");
+	// frameOptions.id = "frameOptions";
+	// frameSelector.appendChild(frameOptions);
 
 	var roboState = {
 		recording: false,
@@ -182,79 +198,242 @@ window.addEventListener("load", function() {
 
 	//code for drawing the current action and actions
 	var drawState = function(state) {
+		if (switching === true) {
+			console.log("Skipping draw state");
+			switching = false;
+			return;
+		}
+		console.log("Drawing state");
 		if (window.lockUpdate) 
 			return;
 		//draw action list
 		actsListCont.innerHTML = "";
 		state.action_names.forEach(function(act_n) {
+			var ac_section = document.createElement("div");
+			
+			
+			ac_section.className = "accordion-section";
+			var ac_section_title = document.createElement("a");
+			ac_section_title.className = "accordion-section-title";
+			ac_section_title.href = "#" + act_n.replace(/\s/g, '');
+			ac_section_title.innerHTML = act_n;
+			actsListCont.appendChild(ac_section);
+			ac_section.appendChild(ac_section_title);
+			var toggle = document.createElement("div");
 			var dv = document.createElement("div");
-			dv.innerHTML = act_n;
-			dv.addEventListener("click", function() {
-				speechPub.publish(new ROSLIB.Message({
+			toggle.appendChild(dv);
+			
+			toggle.id = act_n.replace(/\s/g, '');
+			toggle.style.display = "none";
+			
+			// dv.innerHTML = act_n;
+			ac_section_title.addEventListener("click", function(e) {
+				console.log("Just started!");
+				current_action = act_n;
+				// removeChildrenFromNode(dv);
+
+			   var len = dv.childNodes.length;
+
+			    while (dv.hasChildNodes())
+			    {
+			      dv.removeChild(dv.firstChild);
+			    }  
+
+				// Grab current anchor value
+				var currentAttrValue = jQuery(this).attr('href');
+
+				if(jQuery(e.target).is('.active')) {
+					close_accordion_section();
+				}else {
+					close_accordion_section();
+
+					// Add active class to section title
+					jQuery(this).addClass('active');
+					// Open up the hidden content panel
+					jQuery('.accordion ' + currentAttrValue).slideDown(300).addClass('open');
+
+				}
+
+				e.preventDefault();
+
+		        console.log("Almost at end!");     
+		  		speechPub.publish(new ROSLIB.Message({
 					command: "switch-to-action " + act_n
 				}));
+
+				switching = true;
+
+				var frameOptions = document.createElement("select");
+				frameOptions.id = "frameOptions";
+				dv.appendChild(frameOptions);
+
+		        tfSrv.callService(new ROSLIB.ServiceRequest({}), function(result) {
+					console.log("Tf service called");
+
+					
+					console.log("Processing tf result");
+
+					while( frameOptions.firstChild ) {
+					    frameOptions.removeChild( frameOptions.firstChild );
+					}
+
+					for (var i = 0; i < result.current_transforms.transforms.length; i++) {
+					    var option = document.createElement("option");
+					    option.value = result.current_transforms.transforms[i].header.frame_id;
+					    option.text = result.current_transforms.transforms[i].header.frame_id;
+					    frameOptions.appendChild(option);
+					    // console.log(result.current_transforms.transforms[i].header.frame_id);
+					}
+					
+					
+				});
+
+				var rightCheck = document.createElement("input");
+				rightCheck.type = "checkbox";
+				rightCheck.name = "Right Arm";
+				rightCheck.value = "0";
+				rightCheck.id = "rightCheck";
+				var rightLabel = document.createElement("label");
+				var rightDesc = document.createTextNode("Right Arm");
+				rightLabel.appendChild(rightCheck);
+				rightLabel.appendChild(rightDesc);
+				dv.appendChild(rightLabel);
+
+				var leftCheck = document.createElement("input");
+				leftCheck.type = "checkbox";
+				leftCheck.name = "Left Arm";
+				leftCheck.value = "0";
+				leftCheck.id = "leftCheck";
+				var leftLabel = document.createElement("label");
+				var leftDesc = document.createTextNode("Left Arm");
+				leftLabel.appendChild(leftCheck);
+				leftLabel.appendChild(leftDesc);
+				dv.appendChild(leftLabel);
+
+
 			});
-			actsListCont.appendChild(dv);
+			
+			toggle.className = "accordion-section-content";
+			
+			ac_section.appendChild(toggle);
+			//current action:
+			stepsSpan = document.createElement("div");
+
+			toggle.appendChild(stepsSpan);
+			if (true){ 
+				var action = jsyaml.load(state.action_str);
+				//html for one step
+				var dispStep = function(step_act, i) {
+		            var stepRow = document.createElement("tr");
+		            var stepIndexCol = document.createElement("td")
+		            stepRow.appendChild(stepIndexCol);
+		            var stepIndexNode = document.createTextNode(i+1);
+		            stepIndexCol.appendChild(stepIndexNode);
+		            var rightCol = document.createElement("td")
+		            stepRow.appendChild(rightCol);
+		            var leftCol = document.createElement("td")
+		            stepRow.appendChild(leftCol);
+		            var selectRightBut = document.createElement("button");
+		            selectRightBut.innerHTML = "Select right";
+		            selectRightBut.addEventListener("click", function() {
+		                guiPub.publish(new ROSLIB.Message({
+		                    command: "select-step",
+		                    param: get_arm_step_id(i, 0)
+		                }));
+		             });
+		            rightCol.appendChild(selectRightBut)
+		            var selectLeftBut = document.createElement("button");
+		            selectLeftBut.innerHTML = "Select left";
+		            selectLeftBut.addEventListener("click", function() {
+		                guiPub.publish(new ROSLIB.Message({
+		                    command: "select-step",
+		                    param: get_arm_step_id(i, 1)
+		                }));
+		             });
+		            leftCol.appendChild(selectLeftBut)
+		            var delCol = document.createElement("td")
+		            stepRow.appendChild(delCol);
+		            var delBut = document.createElement("button");
+		            delBut.innerHTML = "Delete";
+		            delBut.addEventListener("click", function() {
+		                guiPub.publish(new ROSLIB.Message({
+		                    command: "delete-step",
+		                    param: i
+		                }));
+		            });
+		            delCol.appendChild(delBut);
+		            return stepRow;
+				};
+
+				//go though action steps and add them all to the gui
+				action.arm_steps.forEach(function(step_act, i) {
+					stepsSpan.appendChild(dispStep(step_act, i));
+				});
+			}
+
 		});
-		actsListCont.querySelectorAll("div")[state.selected_action].className = 
-			"selected";
+		// actsListCont.querySelectorAll("div")[state.selected_action].className = 
+		// 	"selected";
 
 		newNameInp.value = state.action_names[state.selected_action];
 
-		//current action:
-		stepsSpan.innerHTML = "";
+		
 
-		var action = jsyaml.load(state.action_str);
-		//html for one step
-		var dispStep = function(step_act, i) {
-            var stepRow = document.createElement("tr");
-            var stepIndexCol = document.createElement("td")
-            stepRow.appendChild(stepIndexCol);
-            var stepIndexNode = document.createTextNode(i+1);
-            stepIndexCol.appendChild(stepIndexNode);
-            var rightCol = document.createElement("td")
-            stepRow.appendChild(rightCol);
-            var leftCol = document.createElement("td")
-            stepRow.appendChild(leftCol);
-            var selectRightBut = document.createElement("button");
-            selectRightBut.innerHTML = "Select right";
-            selectRightBut.addEventListener("click", function() {
-                guiPub.publish(new ROSLIB.Message({
-                    command: "select-step",
-                    param: get_arm_step_id(i, 0)
-                }));
-             });
-            rightCol.appendChild(selectRightBut)
-            var selectLeftBut = document.createElement("button");
-            selectLeftBut.innerHTML = "Select left";
-            selectLeftBut.addEventListener("click", function() {
-                guiPub.publish(new ROSLIB.Message({
-                    command: "select-step",
-                    param: get_arm_step_id(i, 1)
-                }));
-             });
-            leftCol.appendChild(selectLeftBut)
-            var delCol = document.createElement("td")
-            stepRow.appendChild(delCol);
-            var delBut = document.createElement("button");
-            delBut.innerHTML = "Delete";
-            delBut.addEventListener("click", function() {
-                guiPub.publish(new ROSLIB.Message({
-                    command: "delete-step",
-                    param: i
-                }));
-            });
-            delCol.appendChild(delBut);
-            return stepRow;
-		};
+		// var action = jsyaml.load(state.action_str);
+		// //html for one step
+		// var dispStep = function(step_act, i) {
+  //           var stepRow = document.createElement("tr");
+  //           var stepIndexCol = document.createElement("td")
+  //           stepRow.appendChild(stepIndexCol);
+  //           var stepIndexNode = document.createTextNode(i+1);
+  //           stepIndexCol.appendChild(stepIndexNode);
+  //           var rightCol = document.createElement("td")
+  //           stepRow.appendChild(rightCol);
+  //           var leftCol = document.createElement("td")
+  //           stepRow.appendChild(leftCol);
+  //           var selectRightBut = document.createElement("button");
+  //           selectRightBut.innerHTML = "Select right";
+  //           selectRightBut.addEventListener("click", function() {
+  //               guiPub.publish(new ROSLIB.Message({
+  //                   command: "select-step",
+  //                   param: get_arm_step_id(i, 0)
+  //               }));
+  //            });
+  //           rightCol.appendChild(selectRightBut)
+  //           var selectLeftBut = document.createElement("button");
+  //           selectLeftBut.innerHTML = "Select left";
+  //           selectLeftBut.addEventListener("click", function() {
+  //               guiPub.publish(new ROSLIB.Message({
+  //                   command: "select-step",
+  //                   param: get_arm_step_id(i, 1)
+  //               }));
+  //            });
+  //           leftCol.appendChild(selectLeftBut)
+  //           var delCol = document.createElement("td")
+  //           stepRow.appendChild(delCol);
+  //           var delBut = document.createElement("button");
+  //           delBut.innerHTML = "Delete";
+  //           delBut.addEventListener("click", function() {
+  //               guiPub.publish(new ROSLIB.Message({
+  //                   command: "delete-step",
+  //                   param: i
+  //               }));
+  //           });
+  //           delCol.appendChild(delBut);
+  //           return stepRow;
+		// };
 
-		//go though action steps and add them all to the gui
-		action.arm_steps.forEach(function(step_act, i) {
-			stepsSpan.appendChild(dispStep(step_act, i));
-		});
+		// //go though action steps and add them all to the gui
+		// action.arm_steps.forEach(function(step_act, i) {
+		// 	stepsSpan.appendChild(dispStep(step_act, i));
+		// });
+		
+
+		
 	};
 
 	expListener.subscribe(function(state) {
+		console.log("Listener");
 		drawState(state);
 	});
 
@@ -271,22 +450,14 @@ window.addEventListener("load", function() {
 		processResult(result);
 	});
 
-	var addTfOptions = function(result) {
+	
 
-		//Create and append the options
-		for (var i = 0; i < result.transforms.length; i++) {
-		    var option = document.createElement("option");
-		    option.value = result.transforms[i].header.frame_id;
-		    option.text = result.transforms[i].header.frame_id;
-		    frameOptions.appendChild(option);
-		}
-	};
-
-	tfListener.subscribe(function(result) {
-		addTfOptions(result);
-	});
+	// tfListener.subscribe(function(result) {
+	// 	addTfOptions(result);
+	// });
 
 	expListenerSrvCli.callService(new ROSLIB.ServiceRequest({}), function(result) {
+		console.log("Service client call");
 		drawState(result.state);
 	});
 

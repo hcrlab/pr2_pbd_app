@@ -9,6 +9,8 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib
   std_msgs
   geometry_msgs
+  tf
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -72,6 +74,7 @@ add_message_files(
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
+  CurrentTf.srv
   GetExperimentState.srv
   GetSavedActions.srv
   GetSavedHeadPoses.srv
@@ -92,6 +95,7 @@ generate_messages(
   DEPENDENCIES
   std_msgs
   geometry_msgs
+  tf
 )
 
 ###################################
