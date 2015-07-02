@@ -6,6 +6,7 @@ function close_accordion_section() {
 }
 
 var switching = false;
+var updated = false;
 
 var current_action = "none";
 
@@ -198,11 +199,11 @@ window.addEventListener("load", function() {
 
 	//code for drawing the current action and actions
 	var drawState = function(state) {
-		if (switching === true) {
-			console.log("Skipping draw state");
-			switching = false;
-			return;
-		}
+		// if (switching === true) {
+		// 	console.log("Skipping draw state");
+		// 	switching = false;
+		// 	return;
+		// }
 		console.log("Drawing state");
 		if (window.lockUpdate) 
 			return;
@@ -234,6 +235,7 @@ window.addEventListener("load", function() {
 				}
 				else {
 					switching = false;
+					updated = false;
 				}
 				
 				console.log(e.currentTarget.innerHTML);
@@ -263,12 +265,21 @@ window.addEventListener("load", function() {
 
 				}
 
+				if (!updated){
+					toggle.style.display = "none";
+				}
+
 				e.preventDefault();
 
-		        console.log("Almost at end!");     
-		  		speechPub.publish(new ROSLIB.Message({
-					command: "switch-to-action " + act_n
-				}));
+		        console.log("Almost at end!");
+		        if (switching) {
+		        	switching = false;
+		        }
+		        else {     
+			  		speechPub.publish(new ROSLIB.Message({
+						command: "switch-to-action " + act_n
+					}));
+				}
 		  		
 
 				var frameOptions = document.createElement("select");
@@ -317,6 +328,7 @@ window.addEventListener("load", function() {
 				leftLabel.appendChild(leftCheck);
 				leftLabel.appendChild(leftDesc);
 				dv.appendChild(leftLabel);
+				console.log("Done with click event");
 
 
 			});
@@ -377,7 +389,14 @@ window.addEventListener("load", function() {
 				action.arm_steps.forEach(function(step_act, i) {
 					stepsSpan.appendChild(dispStep(step_act, i));
 				});
+				if (ac_section_title.innerHTML === current_action){
+					ac_section_title.click();
+				}
+				console.log("Done with action");
+
 			}
+
+			console.log("Done drawing state");
 
 		});
 		// actsListCont.querySelectorAll("div")[state.selected_action].className = 
@@ -442,6 +461,7 @@ window.addEventListener("load", function() {
 
 	expListener.subscribe(function(state) {
 		console.log("Listener");
+		updated = true;
 		drawState(state);
 	});
 
