@@ -229,10 +229,19 @@ window.addEventListener("load", function() {
 			// dv.innerHTML = act_n;
 			ac_section_title.addEventListener("click", function(e) {
 				console.log("Just started!");
-				current_action = act_n;
+				if (current_action === e.currentTarget.innerHTML){
+					switching = true;
+				}
+				else {
+					switching = false;
+				}
+				
+				console.log(e.currentTarget.innerHTML);
+
+				current_action = e.currentTarget.innerHTML;
 				// removeChildrenFromNode(dv);
 
-			   var len = dv.childNodes.length;
+			   	var len = dv.childNodes.length;
 
 			    while (dv.hasChildNodes())
 			    {
@@ -260,8 +269,7 @@ window.addEventListener("load", function() {
 		  		speechPub.publish(new ROSLIB.Message({
 					command: "switch-to-action " + act_n
 				}));
-
-				switching = true;
+		  		
 
 				var frameOptions = document.createElement("select");
 				frameOptions.id = "frameOptions";
