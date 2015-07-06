@@ -135,6 +135,8 @@ class ManipulationStep(Step):
         self.lock.acquire()
         r_object = None
         l_object = None
+        rospy.loginfo("Use left: ")
+        rospy.loginfo(arm_step.armTarget.useLeft)
         self.arm_steps.append(arm_step.copy())
         if arm_step.armTarget.rArm.refFrame == ArmState.OBJECT:
             r_object = arm_step.armTarget.rArm.refFrameObject
@@ -151,6 +153,7 @@ class ManipulationStep(Step):
         world_objects = World.get_world().get_frame_list()
         self.marker_sequence.add_arm_step(cur_step, world_objects)
         self.marker_sequence.set_total_n_markers(len(self.arm_steps))
+        
         self.lock.release()
 
     def get_step(self, index):
@@ -426,6 +429,11 @@ class ManipulationStep(Step):
             file_path = act_f_id
         act_file = open(file_path, 'r')
         act = ManipulationStep.from_string(act_file)
+        rospy.loginfo("PRINTING ACT")
+        rospy.loginfo("PRINTING ACT")
+        rospy.loginfo("PRINTING ACT")
+
+        rospy.loginfo(act)
         act_file.close()
         return act
 

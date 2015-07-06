@@ -41,7 +41,7 @@
   <node pkg="interactive_marker_proxy" type="proxy" name="proxy_world_objects" output="screen" args="topic_ns:=/world_objects target_frame:=/base_link" />
   <node pkg="interactive_marker_proxy" type="proxy" name="proxy_saved_poses" output="screen" args="topic_ns:=/programmed_actions target_frame:=/base_link" />
   <node pkg="pr2_pbd_interaction" type="publish_tf.py" name="current_tf_frame_publisher"/>
-
+  <!-- <node pkg="pr2_pbd_interaction" type="action_frame_param_service.py" name="action_frame_param_setter"/> -->
   <node name="throttle_tf_frames" type="throttle" pkg="topic_tools" args="messages /current_tf_transforms 1.0" />
 
 </launch>

@@ -167,6 +167,8 @@ class ArmStep(Step):
                                                 self.armTarget.rArm)
             copy.armTarget.lArm = ArmStep._copy_arm_state(
                                                 self.armTarget.lArm)
+            copy.armTarget.useRight = self.armTarget.useRight
+            copy.armTarget.useLeft = self.armTarget.useLeft
         elif (copy.type == ArmStepType.ARM_TRAJECTORY):
             copy.armTrajectory = ArmTrajectory()
             copy.armTrajectory.timing = self.armTrajectory.timing[:]
@@ -202,6 +204,7 @@ class ArmStep(Step):
         copy.joint_pose = arm_state.joint_pose[:]
         copy.ee_pose = Pose(arm_state.ee_pose.position,
                             arm_state.ee_pose.orientation)
+        copy.frameName = str(arm_state.frameName)
         ## WARNING: the following is not really copying
         copy.refFrameObject = arm_state.refFrameObject
         return copy

@@ -7,12 +7,47 @@ function close_accordion_section() {
 
 var switching = false;
 var updated = false;
+var right_action_frame = 'default';
+var left_action_frame = 'default';
+var usingright = true;
+var usingleft = true;
+
+
+
 
 var current_action = "none";
 
 var ros = new ROSLIB.Ros({
 	url : 'ws://localhost:9090'
   });
+
+var usingright_param = new ROSLIB.Param({
+	ros : ros,
+    name : 'use_right_arm'
+});
+
+usingright_param.set(usingright);
+
+var usingleft_param = new ROSLIB.Param({
+	ros : ros,
+    name : 'use_left_arm'
+});
+
+usingleft_param.set(usingleft);
+
+var right_param = new ROSLIB.Param({
+	ros : ros,
+	name : 'right_action_tf_frame'
+});
+
+right_param.set(right_action_frame);
+
+var left_param = new ROSLIB.Param({
+	ros : ros,
+	name : 'left_action_tf_frame'
+});
+
+left_param.set(left_action_frame);
 
 var speechPub = new ROSLIB.Topic({
 	ros : ros,
@@ -54,6 +89,12 @@ var tfSrv = new ROSLIB.Service({
 	ros : ros,
 	name : '/tf_service',
 	serviceType : 'pr2_pbd_interaction/CurrentTf'
+});
+
+var actionFrameSrv = new ROSLIB.Service({
+	ros : ros,
+	name : '/set_action_frame',
+	serviceType : 'pr2_pbd_interaction/SetActionFrame'
 });
 
 window.lockUpdate = false;
@@ -151,9 +192,9 @@ window.addEventListener("load", function() {
 	var actsListCont = document.querySelector("#actsList");
 	// var stepsSpan = document.querySelector("#curAct");
 	// var frameSelector = document.querySelector("#framesList");
-	// var frameOptions = document.createElement("select");
-	// frameOptions.id = "frameOptions";
-	// frameSelector.appendChild(frameOptions);
+	// var rightFrameOptions = document.createElement("select");
+	// rightFrameOptions.id = "rightFrameOptions";
+	// frameSelector.appendChild(rightFrameOptions);
 
 	var roboState = {
 		recording: false,
@@ -282,9 +323,74 @@ window.addEventListener("load", function() {
 				}
 		  		
 
-				var frameOptions = document.createElement("select");
-				frameOptions.id = "frameOptions";
-				dv.appendChild(frameOptions);
+				var rightFrameOptions = document.createElement("select");
+				rightFrameOptions.id = "rightFrameOptions";
+				rightFrameOptions.onchange = function() {
+					var index = this.selectedIndex;
+					right_action_frame = this.children[index].innerHTML.trim();
+					// actionFrameSrv.callService(new ROSLIB.ServiceRequest({}), function(result) {
+
+					// });
+					var right_param = new ROSLIB.Param({
+					    ros : ros,
+					    name : 'right_action_tf_frame'
+					  });
+
+					  right_param.set(right_action_frame);
+					//console.log(inputText);
+				}
+				dv.appendChild(rightFrameOptions);
+
+				var rightCheck = document.createElement("input");
+				rightCheck.type = "checkbox";
+				rightCheck.name = "Right Arm";
+				rightCheck.value = "0";
+				rightCheck.id = "rightCheck";
+				rightCheck.onchange = function() {
+					if (usingright){
+						usingright = false;
+						var usingright_param = new ROSLIB.Param({
+							ros : ros,
+						    name : 'use_right_arm'
+						});
+
+					  	usingright_param.set(usingright);
+					}
+					else{
+						usingright = true;
+						var usingright_param = new ROSLIB.Param({
+							ros : ros,
+						    name : 'use_right_arm'
+						});
+
+					  	usingright_param.set(usingright);
+					}
+				}
+				rightCheck.checked = usingright;
+				var rightLabel = document.createElement("label");
+				var rightDesc = document.createTextNode("Right Arm");
+				rightLabel.appendChild(rightCheck);
+				rightLabel.appendChild(rightDesc);
+				dv.appendChild(rightLabel);
+				console.log("Done with click event");
+
+				var leftFrameOptions = document.createElement("select");
+				leftFrameOptions.id = "lefttFrameOptions";
+				leftFrameOptions.onchange = function() {
+					var index = this.selectedIndex;
+					left_action_frame = this.children[index].innerHTML.trim();
+					// actionFrameSrv.callService(new ROSLIB.ServiceRequest({}), function(result) {
+					// 	console.log("Frame service returned");
+					// });
+					var left_param = new ROSLIB.Param({
+					    ros : ros,
+					    name : 'left_action_tf_frame'
+					  });
+
+					  left_param.set(left_action_frame);
+					console.log("changing selector");
+				}
+				dv.appendChild(leftFrameOptions);
 
 		        tfSrv.callService(new ROSLIB.ServiceRequest({}), function(result) {
 					console.log("Tf service called");
@@ -292,37 +398,80 @@ window.addEventListener("load", function() {
 					
 					console.log("Processing tf result");
 
-					while( frameOptions.firstChild ) {
-					    frameOptions.removeChild( frameOptions.firstChild );
+					while( rightFrameOptions.firstChild ) {
+					    rightFrameOptions.removeChild( rightFrameOptions.firstChild );
 					}
 
 					for (var i = 0; i < result.current_transforms.transforms.length; i++) {
 					    var option = document.createElement("option");
 					    option.value = result.current_transforms.transforms[i].header.frame_id;
 					    option.text = result.current_transforms.transforms[i].header.frame_id;
-					    frameOptions.appendChild(option);
+					    rightFrameOptions.appendChild(option);
 					    // console.log(result.current_transforms.transforms[i].header.frame_id);
 					}
-					
-					
-				});
+					var option = document.createElement("option");
+				    option.value = "default";
+				    option.text = "default";
+					rightFrameOptions.appendChild(option);
+					for(var i, j = 0; i = rightFrameOptions.options[j]; j++) {
+					    if(i.value == right_action_frame) {
+					        rightFrameOptions.selectedIndex = j;
+					        break;
+					    }
+					}
 
-				var rightCheck = document.createElement("input");
-				rightCheck.type = "checkbox";
-				rightCheck.name = "Right Arm";
-				rightCheck.value = "0";
-				rightCheck.id = "rightCheck";
-				var rightLabel = document.createElement("label");
-				var rightDesc = document.createTextNode("Right Arm");
-				rightLabel.appendChild(rightCheck);
-				rightLabel.appendChild(rightDesc);
-				dv.appendChild(rightLabel);
+					while( leftFrameOptions.firstChild ) {
+					    leftFrameOptions.removeChild( leftFrameOptions.firstChild );
+					}
+
+					for (var i = 0; i < result.current_transforms.transforms.length; i++) {
+					    var option = document.createElement("option");
+					    option.value = result.current_transforms.transforms[i].header.frame_id;
+					    option.text = result.current_transforms.transforms[i].header.frame_id;
+					    leftFrameOptions.appendChild(option);
+					    // console.log(result.current_transforms.transforms[i].header.frame_id);
+					}
+					var option = document.createElement("option");
+				    option.value = "default";
+				    option.text = "default";
+					leftFrameOptions.appendChild(option);
+
+					for(var i, j = 0; i = leftFrameOptions.options[j]; j++) {
+					    if(i.value == left_action_frame) {
+					        leftFrameOptions.selectedIndex = j;
+					        break;
+					    }
+					}
+
+
+				});
 
 				var leftCheck = document.createElement("input");
 				leftCheck.type = "checkbox";
 				leftCheck.name = "Left Arm";
 				leftCheck.value = "0";
 				leftCheck.id = "leftCheck";
+				leftCheck.onchange = function() {
+					if (usingleft){
+						usingleft = false;
+						var usingleft_param = new ROSLIB.Param({
+							ros : ros,
+						    name : 'use_left_arm'
+						});
+
+					  	usingleft_param.set(usingleft);
+					}
+					else{
+						usingleft = true;
+						var usingleft_param = new ROSLIB.Param({
+							ros : ros,
+						    name : 'use_left_arm'
+						});
+
+					  	usingleft_param.set(usingleft);
+					}
+				}
+				leftCheck.checked = usingleft;
 				var leftLabel = document.createElement("label");
 				var leftDesc = document.createTextNode("Left Arm");
 				leftLabel.appendChild(leftCheck);
@@ -344,33 +493,87 @@ window.addEventListener("load", function() {
 				var action = jsyaml.load(state.action_str);
 				//html for one step
 				var dispStep = function(step_act, i) {
+					console.log(step_act);
+					console.log(step_act.armTarget.state[0].state[0]);
+
+					step_uses_left = false;
+					step_uses_right = false;
+					if (step_act.armTarget.state[4]){
+						step_uses_right = true;
+					}
+
+					if (step_act.armTarget.state[5]){
+						step_uses_left = true;
+					}
+
+
+					if (step_act.armTarget.state[0].state[0] === 0){
+						right_frame = "base_link";
+					}
+					else{
+						right_frame = step_act.armTarget.state[0].state[4];
+					}
+					console.log(right_frame);
+					if (step_act.armTarget.state[1].state[0] === 0){
+						left_frame = "base_link";
+					}
+					else{
+						left_frame = step_act.armTarget.state[1].state[4];
+					}
+					console.log(left_frame);
+		
+
 		            var stepRow = document.createElement("tr");
-		            var stepIndexCol = document.createElement("td")
+		            var stepIndexCol = document.createElement("td");
+		            
 		            stepRow.appendChild(stepIndexCol);
 		            var stepIndexNode = document.createTextNode(i+1);
 		            stepIndexCol.appendChild(stepIndexNode);
-		            var rightCol = document.createElement("td")
-		            stepRow.appendChild(rightCol);
-		            var leftCol = document.createElement("td")
-		            stepRow.appendChild(leftCol);
-		            var selectRightBut = document.createElement("button");
-		            selectRightBut.innerHTML = "Select right";
-		            selectRightBut.addEventListener("click", function() {
-		                guiPub.publish(new ROSLIB.Message({
-		                    command: "select-step",
-		                    param: get_arm_step_id(i, 0)
-		                }));
-		             });
-		            rightCol.appendChild(selectRightBut)
-		            var selectLeftBut = document.createElement("button");
-		            selectLeftBut.innerHTML = "Select left";
-		            selectLeftBut.addEventListener("click", function() {
-		                guiPub.publish(new ROSLIB.Message({
-		                    command: "select-step",
-		                    param: get_arm_step_id(i, 1)
-		                }));
-		             });
-		            leftCol.appendChild(selectLeftBut)
+
+		            if (step_uses_right){
+			            var rightFrameCol = document.createElement("td");
+			            stepRow.appendChild(rightFrameCol);
+			            rightFrameNode = document.createTextNode("Right frame: " + right_frame);
+			        
+			            rightFrameCol.appendChild(rightFrameNode);
+			        }
+			        if (step_uses_left){
+			        	var leftFrameCol = document.createElement("td");
+			            stepRow.appendChild(leftFrameCol);
+			            leftFrameNode = document.createTextNode("Left frame: " + left_frame);
+			           
+			            leftFrameCol.appendChild(leftFrameNode);
+			        }
+			        if (step_uses_right){
+			            var rightCol = document.createElement("td")
+			            stepRow.appendChild(rightCol);
+			        }
+			        if (step_uses_left){
+		            	var leftCol = document.createElement("td")
+		            	stepRow.appendChild(leftCol);
+		            }
+		            if (step_uses_right){
+			            var selectRightBut = document.createElement("button");
+			            selectRightBut.innerHTML = "Select right";
+			            selectRightBut.addEventListener("click", function() {
+			                guiPub.publish(new ROSLIB.Message({
+			                    command: "select-step",
+			                    param: get_arm_step_id(i, 0)
+			                }));
+			             });
+			            rightCol.appendChild(selectRightBut)
+			        }
+			        if (step_uses_left){
+			            var selectLeftBut = document.createElement("button");
+			            selectLeftBut.innerHTML = "Select left";
+			            selectLeftBut.addEventListener("click", function() {
+			                guiPub.publish(new ROSLIB.Message({
+			                    command: "select-step",
+			                    param: get_arm_step_id(i, 1)
+			                }));
+			             });
+			            leftCol.appendChild(selectLeftBut)
+			        }
 		            var delCol = document.createElement("td")
 		            stepRow.appendChild(delCol);
 		            var delBut = document.createElement("button");

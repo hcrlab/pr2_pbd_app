@@ -248,7 +248,22 @@ class Interaction:
                 states = self._get_arm_states()
                 step = ArmStep()
                 step.type = ArmStepType.ARM_TARGET
-                step.armTarget = ArmTarget(states[0], states[1], 0.2, 0.2)
+                rarm_state = None
+                larm_state = None
+                if rospy.has_param('use_right_arm'):
+                    useright = rospy.get_param('use_right_arm')
+                else:
+                    useright = True
+                if rospy.has_param('use_left_arm'):
+                    useleft = rospy.get_param('use_left_arm')
+                else:
+                    useleft = True
+                if useright:
+                    rarm_state = states[0]
+                if useleft:
+                    larm_state = states[1]
+                
+                step.armTarget = ArmTarget(rarm_state, larm_state, 0.2, 0.2, useright, useleft)
                 actions = [self.robot.get_gripper_state(0),
                            self.robot.get_gripper_state(1)]
                 actions[arm_index] = gripper_state
@@ -266,8 +281,27 @@ class Interaction:
                 states = self._get_arm_states()
                 step = ArmStep()
                 step.type = ArmStepType.ARM_TARGET
-                step.armTarget = ArmTarget(states[0], states[1],
-                                           0.2, 0.2)
+                rarm_state = None
+                larm_state = None
+                if rospy.has_param('use_right_arm'):
+                    useright = rospy.get_param('use_right_arm')
+                else:
+                    useright = True
+                if rospy.has_param('use_left_arm'):
+                    useleft = rospy.get_param('use_left_arm')
+                else:
+                    useleft = True
+                if useright:
+                    rarm_state = states[0]
+                if useleft:
+                    larm_state = states[1]
+                rospy.loginfo("Use right:")
+                rospy.loginfo(useright)
+                rospy.loginfo("Use left:")
+                rospy.loginfo(useleft)
+                step.armTarget = ArmTarget(rarm_state, larm_state, 0.2, 0.2, useright, useleft)
+                rospy.loginfo("Left arm state: ")
+                rospy.loginfo(larm_state)
                 step.gripperAction = GripperAction(
                     self.robot.get_gripper_state(0),
                     self.robot.get_gripper_state(1))
@@ -313,28 +347,57 @@ class Interaction:
         states = [None, None]
 
         nearest_objects = [None, None]
+
         for arm_index in [0, 1]:
-            if (not World.get_world().has_objects()):
-                # Absolute
-                states[arm_index] = ArmState(ArmState.ROBOT_BASE,
-                                             abs_ee_poses[arm_index], joint_poses[arm_index], Object())
-            else:
-                nearest_obj = self.world.get_nearest_object(
-                    abs_ee_poses[arm_index])
-                nearest_objects[arm_index] = nearest_obj
-                if (nearest_obj is None):
-                    states[arm_index] = ArmState(ArmState.ROBOT_BASE,
-                                                 abs_ee_poses[arm_index],
-                                                 joint_poses[arm_index], Object())
+            if arm_index == 0:
+                if rospy.has_param('right_action_tf_frame'):
+                    desired_tf_frame = rospy.get_param('right_action_tf_frame')
                 else:
-                    # Relative
-                    #rospy.loginfo('Pose is relative for arm ' + str(arm_index))
-                    rel_ee_poses[arm_index] = World.get_world().transform(
-                        abs_ee_poses[arm_index],
-                        'base_link', nearest_obj.name)
-                    states[arm_index] = ArmState(ArmState.OBJECT,
-                                                 rel_ee_poses[arm_index],
-                                                 joint_poses[arm_index], nearest_obj)
+                    desired_tf_frame = "default"
+            else:
+                if rospy.has_param('left_action_tf_frame'):
+                    desired_tf_frame = rospy.get_param('left_action_tf_frame')
+                else:
+                    desired_tf_frame = "default"
+
+
+            if desired_tf_frame == "default":
+                if (not World.get_world().has_objects()):
+                    # Absolute
+                    states[arm_index] = ArmState(ArmState.ROBOT_BASE,
+                                                 abs_ee_poses[arm_index], joint_poses[arm_index], Object(), "base_link")
+                else:
+                    nearest_obj = self.world.get_nearest_object(
+                        abs_ee_poses[arm_index])
+                    nearest_objects[arm_index] = nearest_obj
+                    if (nearest_obj is None):
+                        states[arm_index] = ArmState(ArmState.ROBOT_BASE,
+                                                     abs_ee_poses[arm_index],
+                                                     joint_poses[arm_index], Object(), "base_link")
+                    else:
+                        # Relative
+                        #rospy.loginfo('Pose is relative for arm ' + str(arm_index))
+                        rel_ee_poses[arm_index] = World.get_world().transform(
+                            abs_ee_poses[arm_index],
+                            'base_link', nearest_obj.name)
+                        states[arm_index] = ArmState(ArmState.OBJECT,
+                                                     rel_ee_poses[arm_index],
+                                                     joint_poses[arm_index], nearest_obj, nearest_obj.name)
+            elif desired_tf_frame == "base_link":
+                states[arm_index] = ArmState(ArmState.ROBOT_BASE,
+                                                 abs_ee_poses[arm_index], joint_poses[arm_index], Object(), "base_link")
+            else:
+                rel_ee_poses[arm_index] = World.get_world().transform(
+                    abs_ee_poses[arm_index],
+                    'base_link', desired_tf_frame)
+                rospy.loginfo("Desired tf: " + desired_tf_frame)
+                obj = Object()
+                obj.name = ""
+
+                states[arm_index] = ArmState(ArmState.OTHER,
+                                             rel_ee_poses[arm_index],
+                                             joint_poses[arm_index], obj, desired_tf_frame)
+
         self.world.process_nearest_objects(nearest_objects)
         return states
 
