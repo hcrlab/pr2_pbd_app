@@ -43,6 +43,7 @@ class ArmStep(Step):
         self.conditions.append(new_condition)
 
     def execute(self, action_data):
+        rospy.loginfo("Arm Step execute")
         from pr2_pbd_interaction.Robot import Robot
 
         robot = Robot.get_robot()
@@ -76,9 +77,14 @@ class ArmStep(Step):
         # send a request to Robot to move the arms to their respective targets
         if (self.type == ArmStepType.ARM_TARGET):
             rospy.loginfo('Will perform arm target action step.')
-
-            if (not robot.move_to_joints(self.armTarget.rArm,
-                                         self.armTarget.lArm)):
+            rArm = self.armTarget.rArm
+            lArm = self.armTarget.lArm
+            if self.armTarget.useRight:
+                rArm = None
+            if self.armTarget.useLeft:
+                lArm = None
+            if (not robot.move_to_joints(rArm,
+                                         lArm)):
                 if robot.preempt:
                     robot.status = ExecutionStatus.PREEMPTED
                     rospy.logerr('Execution of arm step failed, execution preempted by user.')

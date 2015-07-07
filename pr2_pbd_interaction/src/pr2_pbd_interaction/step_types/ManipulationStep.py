@@ -73,7 +73,7 @@ class ManipulationStep(Step):
 
     def execute(self, action_data=None):
         from pr2_pbd_interaction.Robot import Robot
-
+        rospy.loginfo("Manip Step execute")
         robot = Robot.get_robot()
         robot.move_head_to_point(self.head_position)
         if len(self.get_unique_objects()) > 0:

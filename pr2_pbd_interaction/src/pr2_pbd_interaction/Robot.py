@@ -115,6 +115,7 @@ class Robot:
                 self.status = ExecutionStatus.OTHER_ERROR
             else:
                 self.status = ExecutionStatus.SUCCEEDED
+            rospy.loginfo("Status: " + str(self.status))
             rospy.loginfo('Execution finished')
         self._result_publisher.publish(ExecutionResult(ExecutionStatus(self.status), self.action.get_error_msg()))
 
@@ -135,11 +136,18 @@ class Robot:
             # If arm target action
             if (manipulation_step.arm_steps[i].type == ArmStepType.ARM_TARGET):
                 # Find frames that are relative and convert to absolute
-
-                r_arm, has_solution_r = Robot.solve_ik_for_arm(0,
-                                                               manipulation_step.arm_steps[i].armTarget.rArm,
-                                                               self.z_offset)
-                l_arm, has_solution_l = Robot.solve_ik_for_arm(1,
+                has_solution_r = True
+                has_solution_l = True
+                r_arm = None
+                l_arm = None
+                if manipulation_step.arm_steps[i].armTarget.useRight:
+                    rospy.loginfo("Using right")
+                    r_arm, has_solution_r = Robot.solve_ik_for_arm(0,
+                                                                   manipulation_step.arm_steps[i].armTarget.rArm,
+                                                                   self.z_offset)
+                if manipulation_step.arm_steps[i].armTarget.useLeft:
+                    rospy.loginfo("Using left")
+                    l_arm, has_solution_l = Robot.solve_ik_for_arm(1,
                                                                manipulation_step.arm_steps[i].armTarget.lArm,
                                                                self.z_offset)
 
@@ -327,23 +335,32 @@ class Robot:
 
     def move_to_joints(self, r_arm, l_arm):
         '''Makes the arms move to indicated joint poses'''
-        time_to_r_pose = Robot._get_time_to_pose(r_arm, 0)
-        time_to_l_pose = Robot._get_time_to_pose(l_arm, 1)
+        rospy.loginfo("Move to joints")
+        time_to_r_pose = None
+        time_to_l_pose = None
+        if not r_arm == None:
+            rospy.loginfo("Right arm used")
+            time_to_r_pose = Robot._get_time_to_pose(r_arm, 0)
+        if not l_arm == None:
+            rospy.loginfo("Left arm used")
+            time_to_l_pose = Robot._get_time_to_pose(l_arm, 1)
 
         #  If both arms are moving adjust velocities and find most moving arm
         is_r_moving = (time_to_r_pose != None)
         is_l_moving = (time_to_l_pose != None)
-        if (not is_r_moving):
+        if (not is_r_moving) and (not l_arm == None):
             Response.look_at_point(l_arm.ee_pose.position)
-        elif (not is_l_moving):
+        elif (not is_l_moving) and (not r_arm == None):
             Response.look_at_point(r_arm.ee_pose.position)
         else:
             if (time_to_r_pose > time_to_l_pose):
                 time_to_l_pose = time_to_r_pose
-                Response.look_at_point(r_arm.ee_pose.position)
+                if (not r_arm == None):
+                    Response.look_at_point(r_arm.ee_pose.position)
             else:
                 time_to_r_pose = time_to_l_pose
-                Response.look_at_point(l_arm.ee_pose.position)
+                if (not l_arm == None):
+                    Response.look_at_point(l_arm.ee_pose.position)
 
         #  Move arms to target
         if (is_r_moving):
